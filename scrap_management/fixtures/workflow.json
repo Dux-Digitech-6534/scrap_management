@@ -1,0 +1,54 @@
+[
+ {
+  "doctype": "Workflow",
+  "name": "Scrap Approval Workflow",
+  "workflow_name": "Scrap Approval Workflow",
+  "document_type": "Scrap",
+  "is_active": 1,
+  "send_email_alert": 0,
+  "workflow_state_field": "approval_state",
+  "states": [
+   {"doctype": "Workflow Document State", "state": "Draft", "doc_status": "0", "allow_edit": "Scrap Creator"},
+   {"doctype": "Workflow Document State", "state": "Pending Approval", "doc_status": "0", "allow_edit": "Scrap Approver"},
+   {"doctype": "Workflow Document State", "state": "Approved", "doc_status": "0", "allow_edit": "Scrap Approver"},
+   {"doctype": "Workflow Document State", "state": "Rejected", "doc_status": "0", "allow_edit": "Scrap Creator"},
+   {"doctype": "Workflow Document State", "state": "Returned for Correction", "doc_status": "0", "allow_edit": "Scrap Creator"}
+  ],
+  "transitions": [
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Scrap Creator", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "Scrap Approver", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "Scrap Approver", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Return for Correction", "next_state": "Returned for Correction", "allowed": "Scrap Approver", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Return for Correction", "next_state": "Returned for Correction", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Returned for Correction", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Scrap Creator", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Returned for Correction", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "System Manager", "allow_self_approval": 1}
+  ]
+ },
+ {
+  "doctype": "Workflow",
+  "name": "Quotation Approval Workflow",
+  "workflow_name": "Quotation Approval Workflow",
+  "document_type": "Quotation",
+  "is_active": 1,
+  "send_email_alert": 0,
+  "workflow_state_field": "custom_approval_status",
+  "states": [
+   {"doctype": "Workflow Document State", "state": "Draft", "doc_status": "0", "allow_edit": "Sales User"},
+   {"doctype": "Workflow Document State", "state": "Pending Approval", "doc_status": "0", "allow_edit": "Quotation Approver"},
+   {"doctype": "Workflow Document State", "state": "Approved", "doc_status": "0", "allow_edit": "Quotation Approver"},
+   {"doctype": "Workflow Document State", "state": "Rejected", "doc_status": "0", "allow_edit": "Sales User"}
+  ],
+  "transitions": [
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Sales User", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Sales Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "Quotation Approver", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "Quotation Approver", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "System Manager", "allow_self_approval": 1}
+  ]
+ }
+]

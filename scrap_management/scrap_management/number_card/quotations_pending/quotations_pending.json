@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Quotations Pending",
+ "label": "Quotations Pending",
+ "document_type": "Quotation",
+ "function": "Count",
+ "filters_json": "[[\"Quotation\",\"custom_approval_status\",\"!=\",\"Approved\"],[\"Quotation\",\"docstatus\",\"!=\",2],[\"Quotation\",\"custom_scrap\",\"is\",\"set\"]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#3567d6"
+}

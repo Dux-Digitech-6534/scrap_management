@@ -1,0 +1,10 @@
+{
+ "doctype": "Page",
+ "name": "scrap-management-ui",
+ "title": "Scrap Management",
+ "module": "Scrap Management",
+ "standard": "Yes",
+ "system_page": 0,
+ "icon": "non-profit",
+ "roles": []
+}

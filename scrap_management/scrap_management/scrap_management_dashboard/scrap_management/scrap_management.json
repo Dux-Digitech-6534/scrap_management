@@ -1,0 +1,30 @@
+{
+ "doctype": "Dashboard",
+ "name": "Scrap Management",
+ "dashboard_name": "Scrap Management",
+ "module": "Scrap Management",
+ "is_default": 0,
+ "is_standard": 1,
+ "cards": [
+  {"doctype": "Number Card Link", "card": "Total Scrap"},
+  {"doctype": "Number Card Link", "card": "Pending Scrap Approval"},
+  {"doctype": "Number Card Link", "card": "Approved Scrap"},
+  {"doctype": "Number Card Link", "card": "Available for Sale"},
+  {"doctype": "Number Card Link", "card": "Quotations Pending"},
+  {"doctype": "Number Card Link", "card": "Quotations Pending Approval"},
+  {"doctype": "Number Card Link", "card": "Scrap Sales Orders"},
+  {"doctype": "Number Card Link", "card": "Pending Dispatch"},
+  {"doctype": "Number Card Link", "card": "Pending Invoice"},
+  {"doctype": "Number Card Link", "card": "Pending Payment"},
+  {"doctype": "Number Card Link", "card": "Closed Scrap"},
+  {"doctype": "Number Card Link", "card": "Total Sale Value"}
+ ],
+ "charts": [
+  {"doctype": "Dashboard Chart Link", "chart": "Scrap by Department"},
+  {"doctype": "Dashboard Chart Link", "chart": "Scrap by Category"},
+  {"doctype": "Dashboard Chart Link", "chart": "Scrap by Campus"},
+  {"doctype": "Dashboard Chart Link", "chart": "Monthly Scrap Quantity"},
+  {"doctype": "Dashboard Chart Link", "chart": "Monthly Scrap Sale Value"},
+  {"doctype": "Dashboard Chart Link", "chart": "Scrap Status Distribution"}
+ ]
+}

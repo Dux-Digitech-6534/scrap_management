@@ -1,0 +1,313 @@
+/*
+ * Scrap Management — DUX Digitech Design System theme.
+ * Tokens ported verbatim from the official design-system handoff
+ * (tokens/colors.css, typography.css, spacing.css). Every rule is scoped
+ * under body.scrap-mgmt-theme (toggled by scrap_management.js only while
+ * the user is on a Scrap Management screen) and targets page CONTENT only
+ * — never .navbar / .desk-sidebar — so no other module on this shared
+ * Desk is affected.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+body.scrap-mgmt-theme,
+body.sm-form-theme {
+	/* ---- Brand ---- */
+	--sm-iris: #5c4de6;
+	--sm-iris-soft: #6d5ef6;
+	--sm-iris-deep: #4a3cd0;
+	--sm-iris-tint: rgba(92, 77, 230, 0.1);
+	--sm-cyan: #0e9c8b;
+	--sm-cyan-tint: rgba(14, 156, 139, 0.12);
+	--sm-brand-grad: linear-gradient(90deg, var(--sm-iris) 0%, #4f9fd8 55%, var(--sm-cyan) 100%);
+
+	/* ---- Surfaces ---- */
+	--sm-canvas: #f3f4f7;
+	--sm-surface-1: #ffffff;
+	--sm-card-bg: #ffffff;
+	--sm-th-bg: #fafafc;
+	--sm-hairline: #e7e9ee;
+	--sm-hairline-2: #dcdfe6;
+
+	/* ---- Text ---- */
+	--sm-fg-1: #1a2030;
+	--sm-fg-2: #586273;
+	--sm-fg-3: #8a93a3;
+
+	/* ---- Status triad ---- */
+	--sm-ok: #15916a;
+	--sm-ok-bg: rgba(21, 145, 106, 0.1);
+	--sm-pending: #b0741a;
+	--sm-pending-bg: rgba(176, 116, 26, 0.11);
+	--sm-err: #c8475e;
+	--sm-err-bg: rgba(200, 71, 94, 0.09);
+
+	/* ---- Type ---- */
+	--sm-font-ui: 'Geist', 'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--sm-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+	/* ---- Spacing / radius / shadow ---- */
+	--sm-r-sm: 8px;
+	--sm-r-md: 12px;
+	--sm-r-lg: 16px;
+	--sm-r-pill: 999px;
+	--sm-shadow-card: 0 6px 26px rgba(22, 28, 46, 0.07);
+	--sm-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+	--sm-shadow-brand: 0 6px 18px rgba(109, 94, 246, 0.4);
+	--sm-spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] body.scrap-mgmt-theme,
+[data-theme="dark"] body.sm-form-theme {
+	--sm-iris: #6d5ef6;
+	--sm-iris-deep: #5b4de0;
+	--sm-cyan: #2dd4bf;
+	--sm-canvas: #0a0d13;
+	--sm-surface-1: #11151e;
+	--sm-card-bg: #181d29;
+	--sm-th-bg: #141926;
+	--sm-hairline: #232938;
+	--sm-hairline-2: #2c3344;
+	--sm-fg-1: #e8eaf1;
+	--sm-fg-2: #9aa3b7;
+	--sm-fg-3: #5e6678;
+	--sm-ok: #34d39a;
+	--sm-ok-bg: rgba(52, 211, 154, 0.1);
+	--sm-pending: #e0a85c;
+	--sm-pending-bg: rgba(224, 168, 92, 0.11);
+	--sm-err: #e8738a;
+	--sm-err-bg: rgba(232, 115, 138, 0.1);
+	--sm-shadow-card: 0 18px 50px rgba(0, 0, 0, 0.42);
+	--sm-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+body.scrap-mgmt-theme .page-content,
+body.scrap-mgmt-theme .workspace-page {
+	font-family: var(--sm-font-ui);
+	background: var(--sm-canvas);
+	color: var(--sm-fg-1);
+}
+
+/* Page title bar */
+body.scrap-mgmt-theme .page-head {
+	background: var(--sm-surface-1);
+	border-bottom: 1px solid var(--sm-hairline);
+}
+body.scrap-mgmt-theme .page-head .title-text {
+	color: var(--sm-fg-1);
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+
+/* Cards / sections — hairline + soft ambient shadow + inset highlight, 16px radius */
+body.scrap-mgmt-theme .frappe-card,
+body.scrap-mgmt-theme .form-page .form-layout .form-section,
+body.scrap-mgmt-theme .widget-group .widget {
+	background: var(--sm-card-bg);
+	border: 1px solid var(--sm-hairline);
+	border-radius: var(--sm-r-lg);
+	box-shadow: var(--sm-shadow-card), var(--sm-inset-hi);
+}
+body.scrap-mgmt-theme .form-section .section-head {
+	color: var(--sm-fg-1);
+	font-weight: 600;
+}
+
+/* Buttons */
+body.scrap-mgmt-theme .page-content .btn-primary,
+body.scrap-mgmt-theme .workspace-page .btn-primary {
+	background: linear-gradient(150deg, var(--sm-iris), var(--sm-iris-deep));
+	border: none;
+	border-radius: var(--sm-r-pill);
+	box-shadow: var(--sm-shadow-brand);
+	transition: transform 0.25s var(--sm-spring);
+}
+body.scrap-mgmt-theme .page-content .btn-primary:hover,
+body.scrap-mgmt-theme .workspace-page .btn-primary:hover {
+	transform: translateY(-1px);
+}
+body.scrap-mgmt-theme .page-content .btn-default,
+body.scrap-mgmt-theme .workspace-page .btn-default {
+	border-radius: var(--sm-r-pill);
+	transition: border-color 0.18s ease, color 0.18s ease;
+}
+body.scrap-mgmt-theme .page-content .btn-default:hover {
+	border-color: var(--sm-iris);
+	color: var(--sm-iris);
+}
+
+/* Numerics always mono + tabular, per the design system's "numbers are first-class" rule */
+body.scrap-mgmt-theme .page-content [data-fieldtype="Currency"],
+body.scrap-mgmt-theme .page-content [data-fieldtype="Float"],
+body.scrap-mgmt-theme .page-content [data-fieldtype="Int"] {
+	font-family: var(--sm-font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Status pills — the warm triad (ok / pending / err) plus iris for in-progress,
+   neutral grey for Draft. Matches guidelines/colors-status.card.html exactly. */
+body.scrap-mgmt-theme .indicator-pill {
+	border-radius: var(--sm-r-pill);
+	font-weight: 500;
+}
+body.scrap-mgmt-theme .indicator-pill.green {
+	background: var(--sm-ok-bg);
+	color: var(--sm-ok);
+}
+body.scrap-mgmt-theme .indicator-pill.orange,
+body.scrap-mgmt-theme .indicator-pill.yellow {
+	background: var(--sm-pending-bg);
+	color: var(--sm-pending);
+}
+body.scrap-mgmt-theme .indicator-pill.red {
+	background: var(--sm-err-bg);
+	color: var(--sm-err);
+}
+body.scrap-mgmt-theme .indicator-pill.blue,
+body.scrap-mgmt-theme .indicator-pill.light-blue {
+	background: var(--sm-iris-tint);
+	color: var(--sm-iris);
+}
+body.scrap-mgmt-theme .indicator-pill.gray,
+body.scrap-mgmt-theme .indicator-pill.grey,
+body.scrap-mgmt-theme .indicator-pill.darkgrey {
+	background: var(--sm-th-bg);
+	color: var(--sm-fg-2);
+}
+body.scrap-mgmt-theme .indicator-pill::before {
+	display: none; /* flat pills, not dot+label */
+}
+
+/* Workspace shortcut cards */
+body.scrap-mgmt-theme .workspace-page .shortcut-widget-box {
+	border: 1px solid var(--sm-hairline);
+	border-radius: var(--sm-r-lg);
+	transition: box-shadow 0.25s var(--sm-spring), transform 0.25s var(--sm-spring);
+}
+body.scrap-mgmt-theme .workspace-page .shortcut-widget-box:hover {
+	box-shadow: var(--sm-shadow-card);
+	transform: translateY(-1px);
+}
+
+/* Report / list toolbars and tables */
+body.scrap-mgmt-theme .page-content .report-wrapper,
+body.scrap-mgmt-theme .page-content .list-row-container {
+	background: var(--sm-card-bg);
+	border-radius: var(--sm-r-lg);
+	border: 1px solid var(--sm-hairline);
+}
+body.scrap-mgmt-theme .page-content .dt-scrollable th {
+	background: var(--sm-th-bg);
+	color: var(--sm-fg-3);
+	text-transform: uppercase;
+	font-size: 11px;
+	letter-spacing: 0.08em;
+}
+body.scrap-mgmt-theme .page-content .number-card-widget-box strong,
+body.scrap-mgmt-theme .page-content .summary-value {
+	font-family: var(--sm-font-mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--sm-cyan);
+}
+
+/* Signature hairline brand-gradient accent on Number Card / summary widgets */
+body.scrap-mgmt-theme .page-content .number-card-widget-box,
+body.scrap-mgmt-theme .page-content .widget.number-card {
+	position: relative;
+	overflow: hidden;
+}
+body.scrap-mgmt-theme .page-content .number-card-widget-box::before,
+body.scrap-mgmt-theme .page-content .widget.number-card::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--sm-brand-grad);
+	opacity: 0.6;
+}
+
+/* ============================================================
+   Document FORM reskin — applied only when the open document is
+   actually part of a scrap transaction (custom_scrap is set), via
+   body.sm-form-theme toggled from doc-level JS, never by route/
+   doctype alone. So a normal, unrelated Quotation/Sales Order/
+   Delivery Note/Sales Invoice/Payment Entry used by any other team
+   for any other purpose renders exactly as it always has.
+   ============================================================ */
+body.sm-form-theme .form-page .form-layout .form-section {
+	background: var(--sm-card-bg);
+	border: 1px solid var(--sm-hairline);
+	border-radius: var(--sm-r-lg);
+	box-shadow: var(--sm-shadow-card);
+	padding-bottom: 14px;
+	margin-bottom: 14px;
+}
+body.sm-form-theme .form-page .form-layout .form-section .section-head {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 14px 18px 10px;
+	margin-bottom: 8px;
+	border-bottom: 1px solid var(--sm-hairline);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: 600;
+	color: var(--sm-fg-2);
+}
+body.sm-form-theme .form-page .form-layout .form-section .section-head[data-sm-index]::before {
+	content: attr(data-sm-index);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 6px;
+	background: var(--sm-iris-tint);
+	color: var(--sm-iris);
+	font-size: 10px;
+	font-weight: 700;
+	font-family: var(--sm-font-mono);
+	flex-shrink: 0;
+}
+body.sm-form-theme .form-page .form-layout .form-section .section-body {
+	padding: 0 18px;
+}
+/* Read-only / workflow-locked field display: label small-caps above, bold plain value below — no input chrome */
+body.sm-form-theme .form-page .control-label {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--sm-fg-3);
+	font-weight: 600;
+}
+body.sm-form-theme .form-page .control-value.like-disabled-input {
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--sm-fg-1);
+	background: none;
+	border: 0;
+	padding: 2px 0 0;
+	min-height: auto;
+}
+/* Buttons and status pill */
+body.sm-form-theme .page-head .btn-primary {
+	background: linear-gradient(150deg, var(--sm-iris), var(--sm-iris-deep));
+	border: none;
+	border-radius: var(--sm-r-pill);
+	box-shadow: var(--sm-shadow-brand);
+}
+body.sm-form-theme .page-head .btn-default,
+body.sm-form-theme .page-head .btn-secondary {
+	border-radius: var(--sm-r-pill);
+}
+body.sm-form-theme .page-head .indicator-pill {
+	border-radius: var(--sm-r-pill);
+}
+body.sm-form-theme .page-head .indicator-pill.green { background: var(--sm-ok-bg); color: var(--sm-ok); }
+body.sm-form-theme .page-head .indicator-pill.orange,
+body.sm-form-theme .page-head .indicator-pill.yellow { background: var(--sm-pending-bg); color: var(--sm-pending); }
+body.sm-form-theme .page-head .indicator-pill.red { background: var(--sm-err-bg); color: var(--sm-err); }
+body.sm-form-theme .page-head .indicator-pill.gray,
+body.sm-form-theme .page-head .indicator-pill.grey { background: var(--sm-th-bg); color: var(--sm-fg-2); }

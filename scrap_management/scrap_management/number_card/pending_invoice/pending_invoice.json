@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Pending Invoice",
+ "label": "Pending Invoice",
+ "document_type": "Scrap",
+ "function": "Count",
+ "filters_json": "[[\"Scrap\",\"status\",\"=\",\"Dispatched\"]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#a96d14"
+}

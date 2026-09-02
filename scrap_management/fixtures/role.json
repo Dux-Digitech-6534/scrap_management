@@ -1,0 +1,30 @@
+[
+ {
+  "doctype": "Role",
+  "name": "Scrap Creator",
+  "role_name": "Scrap Creator",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Approver",
+  "role_name": "Scrap Approver",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Quotation Approver",
+  "role_name": "Quotation Approver",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Security User",
+  "role_name": "Security User",
+  "desk_access": 1,
+  "disabled": 0
+ }
+]

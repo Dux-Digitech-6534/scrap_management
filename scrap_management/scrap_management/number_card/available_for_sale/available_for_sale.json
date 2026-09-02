@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Available for Sale",
+ "label": "Available for Sale",
+ "document_type": "Scrap",
+ "function": "Count",
+ "filters_json": "[[\"Scrap\",\"status\",\"=\",\"Available for Sale\"]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#168b67"
+}

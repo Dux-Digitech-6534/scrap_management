@@ -1,0 +1,151 @@
+/*
+ * Scrap Management design theme.
+ * Ported from the approved DUX Scrap Management HTML prototype's design tokens.
+ * Every rule is scoped under body.scrap-mgmt-theme (set by scrap_management.js only
+ * while the user is on a Scrap Management screen) and targets page CONTENT only —
+ * never .navbar / .desk-sidebar — so no other module on this shared Desk is affected.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+body.scrap-mgmt-theme {
+	--sm-iris: #5c4de6;
+	--sm-iris2: #7568f7;
+	--sm-cyan: #0e9c8b;
+	--sm-bg: #f5f6f9;
+	--sm-card: #fff;
+	--sm-line: #e6e8ee;
+	--sm-text: #172033;
+	--sm-muted: #606a7b;
+	--sm-sub: #9099a8;
+	--sm-ok: #168b67;
+	--sm-okbg: #eaf7f2;
+	--sm-warn: #a96d14;
+	--sm-warnbg: #fff5e5;
+	--sm-bad: #c8485d;
+	--sm-badbg: #fff0f3;
+	--sm-info: #3567d6;
+	--sm-infobg: #eef3ff;
+	--sm-grad: linear-gradient(135deg, var(--sm-iris), var(--sm-iris2));
+}
+
+[data-theme="dark"] body.scrap-mgmt-theme {
+	--sm-bg: #0d1118;
+	--sm-card: #171d29;
+	--sm-line: #2c3444;
+	--sm-text: #edf0f7;
+	--sm-muted: #a0a9ba;
+	--sm-sub: #747e91;
+	--sm-okbg: #102a23;
+	--sm-warnbg: #2c2517;
+	--sm-badbg: #321c22;
+	--sm-infobg: #18243d;
+}
+
+body.scrap-mgmt-theme .page-content,
+body.scrap-mgmt-theme .workspace-page {
+	font-family: Geist, var(--font-stack, system-ui), sans-serif;
+	background: var(--sm-bg);
+}
+
+/* Page title bar */
+body.scrap-mgmt-theme .page-head {
+	background: var(--sm-card);
+	border-bottom: 1px solid var(--sm-line);
+}
+body.scrap-mgmt-theme .page-head .title-text {
+	color: var(--sm-text);
+	font-weight: 700;
+}
+
+/* Cards / sections */
+body.scrap-mgmt-theme .frappe-card,
+body.scrap-mgmt-theme .form-page .form-layout .form-section,
+body.scrap-mgmt-theme .widget-group .widget {
+	border: 1px solid var(--sm-line);
+	border-radius: 14px;
+	box-shadow: 0 8px 24px rgba(24, 32, 51, 0.05);
+	background: var(--sm-card);
+}
+body.scrap-mgmt-theme .form-section .section-head {
+	color: var(--sm-text);
+	font-weight: 700;
+}
+
+/* Buttons */
+body.scrap-mgmt-theme .page-content .btn-primary,
+body.scrap-mgmt-theme .workspace-page .btn-primary {
+	background: var(--sm-grad);
+	border: none;
+	border-radius: 999px;
+	box-shadow: none;
+}
+body.scrap-mgmt-theme .page-content .btn-default,
+body.scrap-mgmt-theme .workspace-page .btn-default {
+	border-radius: 999px;
+}
+
+/* Numbers / codes in JetBrains Mono, matching the prototype's mono accents */
+body.scrap-mgmt-theme .page-content .likes-since,
+body.scrap-mgmt-theme .page-content [data-fieldtype="Currency"],
+body.scrap-mgmt-theme .page-content [data-fieldtype="Float"],
+body.scrap-mgmt-theme .page-content [data-fieldtype="Int"] {
+	font-family: 'JetBrains Mono', monospace;
+}
+
+/* Status indicator pills — recolor to the prototype's palette by semantic name */
+body.scrap-mgmt-theme .indicator-pill.orange,
+body.scrap-mgmt-theme .indicator-pill.yellow {
+	background: var(--sm-warnbg);
+	color: var(--sm-warn);
+}
+body.scrap-mgmt-theme .indicator-pill.green {
+	background: var(--sm-okbg);
+	color: var(--sm-ok);
+}
+body.scrap-mgmt-theme .indicator-pill.red {
+	background: var(--sm-badbg);
+	color: var(--sm-bad);
+}
+body.scrap-mgmt-theme .indicator-pill.blue,
+body.scrap-mgmt-theme .indicator-pill.light-blue {
+	background: var(--sm-infobg);
+	color: var(--sm-info);
+}
+body.scrap-mgmt-theme .indicator-pill.gray,
+body.scrap-mgmt-theme .indicator-pill.grey,
+body.scrap-mgmt-theme .indicator-pill.darkgrey {
+	background: #f0f2f5;
+	color: #717b8c;
+}
+body.scrap-mgmt-theme .indicator-pill::before {
+	display: none; /* prototype uses flat pills, not dot+label */
+}
+
+/* Workspace shortcut cards */
+body.scrap-mgmt-theme .workspace-page .shortcut-widget-box {
+	border: 1px solid var(--sm-line);
+	border-radius: 14px;
+	transition: box-shadow 0.15s ease;
+}
+body.scrap-mgmt-theme .workspace-page .shortcut-widget-box:hover {
+	box-shadow: 0 8px 24px rgba(24, 32, 51, 0.08);
+}
+
+/* Report / list toolbars and tables */
+body.scrap-mgmt-theme .page-content .report-wrapper,
+body.scrap-mgmt-theme .page-content .list-row-container {
+	background: var(--sm-card);
+	border-radius: 14px;
+	border: 1px solid var(--sm-line);
+}
+body.scrap-mgmt-theme .page-content .dt-scrollable th {
+	color: var(--sm-sub);
+	text-transform: uppercase;
+	font-size: 10px;
+	letter-spacing: 0.06em;
+}
+body.scrap-mgmt-theme .page-content .number-card-widget-box strong,
+body.scrap-mgmt-theme .page-content .summary-value {
+	font-family: 'JetBrains Mono', monospace;
+	color: var(--sm-cyan);
+}

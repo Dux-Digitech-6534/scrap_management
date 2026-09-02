@@ -1,0 +1,302 @@
+[
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-custom_scrap",
+  "dt": "Stock Entry",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "amended_from",
+  "read_only": 0,
+  "allow_on_submit": 0
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_scrap_section",
+  "dt": "Quotation",
+  "fieldname": "custom_scrap_section",
+  "label": "Scrap Management",
+  "fieldtype": "Section Break",
+  "insert_after": "amended_from"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_scraps",
+  "dt": "Quotation",
+  "fieldname": "custom_scraps",
+  "label": "Linked Scraps",
+  "fieldtype": "Table",
+  "options": "Scrap Reference",
+  "insert_after": "custom_scrap_section"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation Item-custom_scrap",
+  "dt": "Quotation Item",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "item_code",
+  "read_only": 1,
+  "in_list_view": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation Item-custom_attachment",
+  "dt": "Quotation Item",
+  "fieldname": "custom_attachment",
+  "label": "Attachment",
+  "fieldtype": "Attach",
+  "insert_after": "custom_scrap"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_column_break_qty",
+  "dt": "Quotation",
+  "fieldname": "custom_column_break_qty",
+  "fieldtype": "Column Break",
+  "insert_after": "custom_scraps"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_approval_status",
+  "dt": "Quotation",
+  "fieldname": "custom_approval_status",
+  "label": "Approval Status",
+  "fieldtype": "Select",
+  "options": "Draft\nPending Approval\nApproved\nRejected",
+  "default": "Draft",
+  "insert_after": "custom_column_break_qty",
+  "allow_on_submit": 1,
+  "in_list_view": 1,
+  "in_standard_filter": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_approved_by",
+  "dt": "Quotation",
+  "fieldname": "custom_approved_by",
+  "label": "Approved By",
+  "fieldtype": "Link",
+  "options": "User",
+  "read_only": 1,
+  "insert_after": "custom_approval_status",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_approval_date",
+  "dt": "Quotation",
+  "fieldname": "custom_approval_date",
+  "label": "Approval Date",
+  "fieldtype": "Datetime",
+  "read_only": 1,
+  "insert_after": "custom_approved_by",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_approval_remarks",
+  "dt": "Quotation",
+  "fieldname": "custom_approval_remarks",
+  "label": "Approval Remarks",
+  "fieldtype": "Small Text",
+  "insert_after": "custom_approval_date",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Quotation-custom_attachment",
+  "dt": "Quotation",
+  "fieldname": "custom_attachment",
+  "label": "Attachment",
+  "fieldtype": "Attach",
+  "insert_after": "custom_approval_remarks"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_attachment",
+  "dt": "Sales Order",
+  "fieldname": "custom_attachment",
+  "label": "Attachment",
+  "fieldtype": "Attach",
+  "insert_after": "amended_from"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order Item-custom_attachment",
+  "dt": "Sales Order Item",
+  "fieldname": "custom_attachment",
+  "label": "Attachment",
+  "fieldtype": "Attach",
+  "insert_after": "warehouse"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Order-custom_scrap",
+  "dt": "Sales Order",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "amended_from"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_scrap",
+  "dt": "Delivery Note",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "amended_from"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_gate_pass_section",
+  "dt": "Delivery Note",
+  "fieldname": "custom_gate_pass_section",
+  "label": "Gate Pass & Handover",
+  "fieldtype": "Section Break",
+  "collapsible": 1,
+  "insert_after": "custom_scrap"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_gate_pass_no",
+  "dt": "Delivery Note",
+  "fieldname": "custom_gate_pass_no",
+  "label": "Upload Gate Pass",
+  "fieldtype": "Attach",
+  "insert_after": "custom_gate_pass_section",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_vehicle_number",
+  "dt": "Delivery Note",
+  "fieldname": "custom_vehicle_number",
+  "label": "Vehicle Number",
+  "fieldtype": "Data",
+  "insert_after": "custom_gate_pass_no",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_column_break_gp1",
+  "dt": "Delivery Note",
+  "fieldname": "custom_column_break_gp1",
+  "fieldtype": "Column Break",
+  "insert_after": "custom_vehicle_number"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_driver_name",
+  "dt": "Delivery Note",
+  "fieldname": "custom_driver_name",
+  "label": "Driver Name",
+  "fieldtype": "Data",
+  "insert_after": "custom_column_break_gp1",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_driver_mobile",
+  "dt": "Delivery Note",
+  "fieldname": "custom_driver_mobile",
+  "label": "Driver Mobile",
+  "fieldtype": "Data",
+  "insert_after": "custom_driver_name",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_driver_id",
+  "dt": "Delivery Note",
+  "fieldname": "custom_driver_id",
+  "label": "Driver ID / Reference",
+  "fieldtype": "Data",
+  "insert_after": "custom_driver_mobile",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_column_break_gp2",
+  "dt": "Delivery Note",
+  "fieldname": "custom_column_break_gp2",
+  "fieldtype": "Column Break",
+  "insert_after": "custom_driver_id"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_handover_confirmed",
+  "dt": "Delivery Note",
+  "fieldname": "custom_handover_confirmed",
+  "label": "Handover Confirmed",
+  "fieldtype": "Check",
+  "insert_after": "custom_column_break_gp2",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_handover_datetime",
+  "dt": "Delivery Note",
+  "fieldname": "custom_handover_datetime",
+  "label": "Handover Date / Time",
+  "fieldtype": "Datetime",
+  "insert_after": "custom_handover_confirmed",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_security_exit_confirmed",
+  "dt": "Delivery Note",
+  "fieldname": "custom_security_exit_confirmed",
+  "label": "Security Exit Confirmed",
+  "fieldtype": "Check",
+  "insert_after": "custom_handover_datetime",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_security_exit_datetime",
+  "dt": "Delivery Note",
+  "fieldname": "custom_security_exit_datetime",
+  "label": "Security Exit Date / Time",
+  "fieldtype": "Datetime",
+  "insert_after": "custom_security_exit_confirmed",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Delivery Note-custom_security_remarks",
+  "dt": "Delivery Note",
+  "fieldname": "custom_security_remarks",
+  "label": "Security Remarks",
+  "fieldtype": "Small Text",
+  "insert_after": "custom_security_exit_datetime",
+  "allow_on_submit": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Sales Invoice-custom_scrap",
+  "dt": "Sales Invoice",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "amended_from"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Payment Entry-custom_scrap",
+  "dt": "Payment Entry",
+  "fieldname": "custom_scrap",
+  "label": "Scrap",
+  "fieldtype": "Link",
+  "options": "Scrap",
+  "insert_after": "amended_from"
+ }
+]

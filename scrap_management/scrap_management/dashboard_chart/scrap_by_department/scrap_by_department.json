@@ -1,0 +1,16 @@
+{
+ "doctype": "Dashboard Chart",
+ "name": "Scrap by Department",
+ "chart_name": "Scrap by Department",
+ "chart_type": "Group By",
+ "document_type": "Scrap",
+ "group_by_type": "Count",
+ "group_by_based_on": "department",
+ "number_of_groups": 10,
+ "is_public": 1,
+ "module": "Scrap Management",
+ "timeseries": 0,
+ "type": "Bar",
+ "color": "#5c4de6",
+ "filters_json": "[]"
+}

@@ -1,0 +1,175 @@
+{
+ "app": "scrap_management",
+ "charts": [],
+ "content": "[{\"id\": \"header-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Scrap Management</span>\", \"col\": 12}}, {\"id\": \"shortcuts-card\", \"type\": \"card\", \"data\": {\"card_name\": \"Scrap Process\", \"col\": 12}}, {\"id\": \"reports-header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Reports</span>\", \"col\": 12}}, {\"id\": \"reports-card\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 12}}]",
+ "creation": "2026-08-19 10:36:14.267612",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "non-profit",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Scrap Management",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Scrap Process",
+   "link_count": 0,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Dashboard",
+   "link_count": 0,
+   "link_to": "Scrap",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Scrap Entry",
+   "link_count": 0,
+   "link_to": "Scrap",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Scrap Stock",
+   "link_count": 0,
+   "link_to": "Scrap Stock",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Quotations",
+   "link_count": 0,
+   "link_to": "Scrap Quotations",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Order",
+   "link_count": 0,
+   "link_to": "Scrap Sales Order",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Closure",
+   "link_count": 0,
+   "link_to": "Scrap Closure",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 0,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Scrap Report",
+   "link_count": 0,
+   "link_to": "Scrap Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-19 12:40:40.312281",
+ "modified_by": "Administrator",
+ "module": "Scrap Management",
+ "name": "Scrap Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 99.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Dashboard",
+   "link_to": "Scrap Management",
+   "stats_filter": "{}",
+   "type": "Dashboard"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Scrap Entry",
+   "link_to": "Scrap",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "label": "Scrap Stock",
+   "link_to": "Scrap Stock",
+   "report_ref_doctype": "Scrap",
+   "type": "Report"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "",
+   "label": "Quotations",
+   "link_to": "Scrap Quotations",
+   "report_ref_doctype": "Quotation",
+   "type": "Report"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "label": "Sales Order",
+   "link_to": "Scrap Sales Order",
+   "report_ref_doctype": "Sales Order",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Closure",
+   "link_to": "Scrap Closure",
+   "report_ref_doctype": "Scrap",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "label": "Scrap App (Full UI)",
+   "link_to": "scrap-management-ui",
+   "type": "Page"
+  }
+ ],
+ "title": "Scrap Management",
+ "type": "Workspace"
+}

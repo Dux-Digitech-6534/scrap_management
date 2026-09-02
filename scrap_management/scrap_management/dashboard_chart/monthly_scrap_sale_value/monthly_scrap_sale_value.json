@@ -1,0 +1,17 @@
+{
+ "doctype": "Dashboard Chart",
+ "name": "Monthly Scrap Sale Value",
+ "chart_name": "Monthly Scrap Sale Value",
+ "chart_type": "Sum",
+ "document_type": "Scrap",
+ "based_on": "scrap_date",
+ "value_based_on": "approved_sale_value",
+ "timeseries": 1,
+ "time_interval": "Monthly",
+ "timespan": "Last Year",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "type": "Line",
+ "color": "#0e9c8b",
+ "filters_json": "[]"
+}

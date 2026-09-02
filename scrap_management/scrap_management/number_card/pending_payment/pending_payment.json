@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Pending Payment",
+ "label": "Pending Payment",
+ "document_type": "Scrap",
+ "function": "Count",
+ "filters_json": "[[\"Scrap\",\"payment_status\",\"in\",[\"Pending\",\"Partially Paid\"]]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#c8485d"
+}

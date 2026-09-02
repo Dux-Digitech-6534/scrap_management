@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Scrap Sales Orders",
+ "label": "Sales Orders",
+ "document_type": "Sales Order",
+ "function": "Count",
+ "filters_json": "[[\"Sales Order\",\"custom_scrap\",\"is\",\"set\"],[\"Sales Order\",\"docstatus\",\"!=\",2]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#5c4de6"
+}

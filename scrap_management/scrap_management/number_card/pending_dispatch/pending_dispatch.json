@@ -1,0 +1,12 @@
+{
+ "doctype": "Number Card",
+ "name": "Pending Dispatch",
+ "label": "Pending Dispatch",
+ "document_type": "Scrap",
+ "function": "Count",
+ "filters_json": "[[\"Scrap\",\"status\",\"=\",\"Sales Order Created\"]]",
+ "is_public": 1,
+ "module": "Scrap Management",
+ "show_percentage_stats": 0,
+ "color": "#a96d14"
+}

@@ -5,248 +5,89 @@ app_description = "Scrap Management app for Scrap Entry to Closure lifecycle"
 app_email = "admin@raisonigroup.duxdigitech.in"
 app_license = "mit"
 
-# Apps
-# ------------------
+# Desk theme, scoped at runtime (scrap_management.js) to Scrap Management's own
+# screens only — see public/js/scrap_management.js for the route guard.
+app_include_css = "/assets/scrap_management/css/scrap_management.css"
+app_include_js = "/assets/scrap_management/js/scrap_management.js"
 
-# required_apps = []
-
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "scrap_management",
-# 		"logo": "/assets/scrap_management/logo.png",
-# 		"title": "Scrap Management",
-# 		"route": "/scrap_management",
-# 		"has_permission": "scrap_management.api.permission.has_app_permission"
-# 	}
-# ]
-
-# Includes in <head>
-# ------------------
-
-# include js, css files in header of desk.html
-# app_include_css = "/assets/scrap_management/css/scrap_management.css"
-# app_include_js = "/assets/scrap_management/js/scrap_management.js"
-
-# include js, css files in header of web template
-# web_include_css = "/assets/scrap_management/css/scrap_management.css"
-# web_include_js = "/assets/scrap_management/js/scrap_management.js"
-
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "scrap_management/public/scss/website"
-
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
-
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
-
-# include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
-
-# Svg Icons
-# ------------------
-# include app icons in desk
-# app_include_icons = "scrap_management/public/icons.svg"
-
-# Home Pages
-# ----------
-
-# application home page (will override Website Settings)
-# home_page = "login"
-
-# website user home page (by Role)
-# role_home_page = {
-# 	"Role": "home_page"
-# }
-
-# Generators
-# ----------
-
-# automatically create page for each record of this doctype
-# website_generators = ["Web Page"]
-
-# automatically load and sync documents of this doctype from downstream apps
-# importable_doctypes = [doctype_1]
-
-# Jinja
-# ----------
-
-# add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "scrap_management.utils.jinja_methods",
-# 	"filters": "scrap_management.utils.jinja_filters"
-# }
-
-# Installation
-# ------------
-
-# before_install = "scrap_management.install.before_install"
-# after_install = "scrap_management.install.after_install"
-
-# Uninstallation
-# ------------
-
-# before_uninstall = "scrap_management.uninstall.before_uninstall"
-# after_uninstall = "scrap_management.uninstall.after_uninstall"
-
-# Integration Setup
-# ------------------
-# To set up dependencies/integrations with other apps
-# Name of the app being installed is passed as an argument
-
-# before_app_install = "scrap_management.utils.before_app_install"
-# after_app_install = "scrap_management.utils.after_app_install"
-
-# Integration Cleanup
-# -------------------
-# To clean up dependencies/integrations with other apps
-# Name of the app being uninstalled is passed as an argument
-
-# before_app_uninstall = "scrap_management.utils.before_app_uninstall"
-# after_app_uninstall = "scrap_management.utils.after_app_uninstall"
-
-# Desk Notifications
-# ------------------
-# See frappe.core.notifications.get_notification_config
-
-# notification_config = "scrap_management.notifications.get_notification_config"
-
-# Permissions
-# -----------
-# Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+# Fixtures
+# --------
+fixtures = [
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Stock Entry-custom_scrap",
+					"Quotation-custom_scrap_section",
+					"Quotation-custom_scraps",
+					"Quotation-custom_approval_status",
+					"Quotation-custom_column_break_qty",
+					"Quotation-custom_approved_by",
+					"Quotation-custom_approval_date",
+					"Quotation-custom_approval_remarks",
+					"Quotation-custom_attachment",
+					"Quotation Item-custom_scrap",
+					"Quotation Item-custom_attachment",
+					"Sales Order-custom_scrap",
+					"Sales Order-custom_attachment",
+					"Sales Order Item-custom_attachment",
+					"Delivery Note-custom_scrap",
+					"Delivery Note-custom_gate_pass_section",
+					"Delivery Note-custom_gate_pass_no",
+					"Delivery Note-custom_vehicle_number",
+					"Delivery Note-custom_column_break_gp1",
+					"Delivery Note-custom_driver_name",
+					"Delivery Note-custom_driver_mobile",
+					"Delivery Note-custom_driver_id",
+					"Delivery Note-custom_column_break_gp2",
+					"Delivery Note-custom_handover_confirmed",
+					"Delivery Note-custom_handover_datetime",
+					"Delivery Note-custom_security_exit_confirmed",
+					"Delivery Note-custom_security_exit_datetime",
+					"Delivery Note-custom_security_remarks",
+					"Sales Invoice-custom_scrap",
+					"Payment Entry-custom_scrap",
+				],
+			]
+		],
+	},
+	{"dt": "Role", "filters": [["name", "in", ["Scrap Creator", "Scrap Approver", "Quotation Approver", "Security User"]]]},
+	{"dt": "Workflow", "filters": [["name", "in", ["Scrap Approval Workflow", "Quotation Approval Workflow"]]]},
+]
 
 # Document Events
 # ---------------
-# Hook on document methods and events
-
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
-
-# Scheduled Tasks
-# ---------------
-
-# scheduler_events = {
-# 	"all": [
-# 		"scrap_management.tasks.all"
-# 	],
-# 	"daily": [
-# 		"scrap_management.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"scrap_management.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"scrap_management.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"scrap_management.tasks.monthly"
-# 	],
-# }
-
-# Testing
-# -------
-
-# before_tests = "scrap_management.install.before_tests"
-
-# Extend DocType Class
-# ------------------------------
-#
-# Specify custom mixins to extend the standard doctype controller.
-# extend_doctype_class = {
-# 	"Task": "scrap_management.custom.task.CustomTaskMixin"
-# }
-
-# Overriding Methods
-# ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "scrap_management.event.get_events"
-# }
-#
-# each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
-# along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "scrap_management.task.get_dashboard_data"
-# }
-
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-# ignore_links_on_delete = ["Communication", "ToDo"]
-
-# Request Events
-# ----------------
-# before_request = ["scrap_management.utils.before_request"]
-# after_request = ["scrap_management.utils.after_request"]
-
-# Job Events
-# ----------
-# before_job = ["scrap_management.utils.before_job"]
-# after_job = ["scrap_management.utils.after_job"]
-
-# User Data Protection
-# --------------------
-
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"scrap_management.auth.validate"
-# ]
-
-# Automatically update python controller files with type annotations for this app.
-# export_python_type_annotations = True
-
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-
-# Translation
-# ------------
-# List of apps whose translatable strings should be excluded from this app's translations.
-# ignore_translatable_strings_from = []
-
+doc_events = {
+	"Stock Entry": {
+		"on_submit": "scrap_management.scrap_management.doc_events.stock_entry.on_submit",
+		"on_cancel": "scrap_management.scrap_management.doc_events.stock_entry.on_cancel",
+	},
+	"Quotation": {
+		"validate": "scrap_management.scrap_management.doc_events.quotation.validate",
+		"on_update": "scrap_management.scrap_management.doc_events.quotation.on_update",
+		"on_cancel": "scrap_management.scrap_management.doc_events.quotation.on_cancel",
+	},
+	"Sales Order": {
+		"validate": "scrap_management.scrap_management.doc_events.sales_order.validate",
+		"on_submit": "scrap_management.scrap_management.doc_events.sales_order.on_submit",
+		"on_cancel": "scrap_management.scrap_management.doc_events.sales_order.on_cancel",
+	},
+	"Delivery Note": {
+		"validate": "scrap_management.scrap_management.doc_events.delivery_note.validate",
+		"on_submit": "scrap_management.scrap_management.doc_events.delivery_note.on_submit",
+		"on_cancel": "scrap_management.scrap_management.doc_events.delivery_note.on_cancel",
+	},
+	"Sales Invoice": {
+		"validate": "scrap_management.scrap_management.doc_events.sales_invoice.validate",
+		"on_submit": "scrap_management.scrap_management.doc_events.sales_invoice.on_submit",
+		"on_cancel": "scrap_management.scrap_management.doc_events.sales_invoice.on_cancel",
+	},
+	"Payment Entry": {
+		"validate": "scrap_management.scrap_management.doc_events.payment_entry.validate",
+		"on_submit": "scrap_management.scrap_management.doc_events.payment_entry.on_submit",
+		"on_cancel": "scrap_management.scrap_management.doc_events.payment_entry.on_cancel",
+	},
+}
