@@ -181,8 +181,25 @@ def get_scrap_stock_balance(filters=None):
 		"include_zero_stock_items": frappe.utils.cint(filters.get("include_zero_stock_items")),
 	}
 
-	columns, data = execute(frappe._dict(report_filters))
+	if _erpnext_major_version() >= 15:
+		columns, data = execute(frappe._dict(report_filters))
+		return {"columns": columns, "data": data}
+
+	# ERPNext v14: one warehouse per run, no item list — run per warehouse and keep
+	# only the scrap items.
+	wanted_items = set(item_code)
+	columns, data = [], []
+	for wh in warehouse:
+		wh_filters = frappe._dict(report_filters, warehouse=wh, item_code=item_code[0] if len(item_code) == 1 else None)
+		columns, wh_data = execute(wh_filters)
+		data.extend(row for row in wh_data if row.get("item_code") in wanted_items)
 	return {"columns": columns, "data": data}
+
+
+def _erpnext_major_version():
+	import erpnext
+
+	return frappe.utils.cint(str(erpnext.__version__).split(".")[0])
 
 
 @frappe.whitelist()

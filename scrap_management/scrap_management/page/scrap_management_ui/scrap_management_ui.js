@@ -25,6 +25,13 @@ const SM_STYLE = `
 <style>
 #sm2-root { font-family: 'Geist','Geist Variable',system-ui,sans-serif; }
 #sm2-root, #sm2-root * { box-sizing: border-box; }
+/* Frappe's Dialog sets body{overflow:hidden} via inline style while a modal is
+   open and is supposed to clear it on close — on this page that has proven
+   unreliable (recurs across different dialogs and even plain navigation once
+   it's happened once this session), leaving the whole page stuck
+   non-scrollable. Force it back with !important, which beats a plain inline
+   style, so this page is never held hostage by that inline style again. */
+body { overflow-y: auto !important; }
 #sm2-root {
 	--p-iris:#5c4de6; --p-iris2:#4a3cd0; --p-cyan:#0e9c8b;
 	--p-bg:#f3f4f7; --p-card:#fff; --p-line:#e7e9ee; --p-line2:#dcdfe6;
@@ -34,7 +41,7 @@ const SM_STYLE = `
 	--p-err:#c8475e; --p-errbg:rgba(200,71,94,.09);
 	--p-mono:'JetBrains Mono',ui-monospace,monospace;
 	background: var(--p-bg); min-height: calc(100vh - 120px); margin: -15px -15px -15px -15px; padding: 0;
-	display: grid; grid-template-columns: 220px 1fr;
+	display: grid; grid-template-columns: 220px 1fr; min-width: 0; max-width: 100%;
 }
 #sm2-root .sm2-sidebar { background: var(--p-card); border-right: 1px solid var(--p-line); padding: 16px 10px; }
 #sm2-root .sm2-nav-label { padding: 16px 10px 6px; color: var(--p-fg3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
@@ -43,13 +50,19 @@ const SM_STYLE = `
 #sm2-root .sm2-nav-btn:hover svg, #sm2-root .sm2-nav-btn.active svg { color: var(--p-iris); }
 #sm2-root .sm2-nav-btn:hover { background: rgba(92,77,230,.07); color: var(--p-iris); }
 #sm2-root .sm2-nav-btn.active { background: rgba(92,77,230,.1); color: var(--p-iris); }
-#sm2-root .sm2-content { padding: 22px 26px; overflow-x: auto; }
+#sm2-root .sm2-content { padding: 22px 26px; min-width: 0; max-width: 100%; }
 #sm2-root .sm2-page { display: none; }
 #sm2-root .sm2-page.active { display: block; }
 #sm2-root h1.sm2-title { font-size: 24px; margin: 0 0 4px; font-weight: 700; letter-spacing: -.02em; color: var(--p-fg1); }
 #sm2-root p.sm2-sub { color: var(--p-fg2); margin: 0 0 18px; max-width: 760px; line-height: 1.5; }
-#sm2-root .sm2-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+#sm2-root .sm2-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+#sm2-root .sm2-mobile-close, #sm2-root .sm2-mobile-backdrop { display: none; }
+/* No overflow set here on purpose — these rows host live Link-field search
+   dropdowns (Item, Scrap, etc.) that render below the input; any non-visible
+   overflow on this ancestor (even just on one axis, which drags the other
+   axis into "auto" too per the CSS spec) clips that dropdown into a sliver. */
 #sm2-root .sm2-grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 18px; }
+#sm2-root .sm2-grid4 > *, #sm2-root .sm2-dashboard-grid > *, #sm2-root .sm2-detail-grid > *, #sm2-root .sm2-field-grid > * { min-width: 0; }
 #sm2-root .sm2-card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 16px; box-shadow: 0 6px 26px rgba(22,28,46,.06); }
 #sm2-root .sm2-kpi { padding: 18px; }
 #sm2-root .sm2-kpi-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(14,156,139,.1); color: var(--p-cyan); margin-bottom: 12px; }
@@ -70,7 +83,9 @@ const SM_STYLE = `
 #sm2-root .sm2-head h3 { margin: 0; font-size: 14px; color: var(--p-fg1); }
 #sm2-root .sm2-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 #sm2-root .sm2-input, #sm2-root .sm2-select { background: var(--p-card); color: var(--p-fg1); border: 1px solid var(--p-line2); border-radius: 10px; padding: 8px 11px; font-size: 12.5px; outline: 0; }
-#sm2-root .sm2-tablewrap { overflow: auto; }
+#sm2-root .sm2-tablewrap { overflow: auto; -webkit-overflow-scrolling: touch; }
+#sm2-root .sm2-tablewrap::-webkit-scrollbar { height: 7px; }
+#sm2-root .sm2-tablewrap::-webkit-scrollbar-thumb { background: var(--p-line2); border-radius: 4px; }
 #sm2-root table.sm2-table { width: 100%; min-width: 900px; border-collapse: collapse; }
 #sm2-root table.sm2-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--p-fg3); text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--p-line); background: #fafafc; white-space: nowrap; }
 #sm2-root table.sm2-table td { font-size: 12.5px; color: var(--p-fg2); padding: 11px 14px; border-bottom: 1px solid var(--p-line); white-space: nowrap; }
@@ -96,7 +111,7 @@ const SM_STYLE = `
 /* Full-page document detail (replaces navigating to the real Desk form) */
 #sm2-root .sm2-crumb { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--p-fg3); margin-bottom: 6px; }
 #sm2-root .sm2-crumb a { color: var(--p-iris); cursor: pointer; text-decoration: none; }
-#sm2-root .sm2-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+#sm2-root .sm2-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
 #sm2-root .sm2-detail-title { font-size: 22px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 6px; color: var(--p-fg1); }
 #sm2-root .sm2-detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
 #sm2-root .sm2-card.numbered { position: relative; }
@@ -113,7 +128,29 @@ const SM_STYLE = `
 #sm2-root .sm2-linked-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 18px; border-bottom: 1px solid var(--p-line); font-size: 12.5px; }
 #sm2-root .sm2-linked-row:last-child { border-bottom: 0; }
 @media (max-width: 1100px) { #sm2-root .sm2-detail-grid { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { #sm2-root { grid-template-columns: 1fr; } #sm2-root .sm2-sidebar { display: none; } #sm2-root .sm2-grid4 { grid-template-columns: 1fr 1fr; } #sm2-root .sm2-field-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px) {
+	#sm2-root { grid-template-columns: 1fr; }
+	#sm2-root .sm2-sidebar {
+		position: fixed; top: 0; left: 0; bottom: 0; width: 250px; z-index: 60;
+		transform: translateX(-100%); transition: transform .25s ease;
+		box-shadow: 10px 0 30px rgba(10,12,20,.2); overflow-y: auto;
+	}
+	#sm2-root.sm2-mobile-nav-open .sm2-sidebar { transform: translateX(0); }
+	#sm2-root .sm2-mobile-close {
+		display: block; position: absolute; top: 8px; right: 10px; border: 0; background: none;
+		font-size: 22px; line-height: 1; color: var(--p-fg3); cursor: pointer;
+	}
+	#sm2-root.sm2-mobile-nav-open .sm2-mobile-backdrop { display: block; position: fixed; inset: 0; background: rgba(10,12,20,.4); z-index: 55; }
+	#sm2-root .sm2-grid4 { grid-template-columns: 1fr 1fr; }
+	#sm2-root .sm2-field-grid { grid-template-columns: 1fr 1fr; }
+	#sm2-root .sm2-content { padding: 16px 14px; }
+}
+@media (max-width: 480px) {
+	#sm2-root .sm2-grid4 { grid-template-columns: 1fr; }
+	#sm2-root .sm2-field-grid { grid-template-columns: 1fr; }
+	#sm2-root h1.sm2-title { font-size: 19px; }
+	#sm2-root .sm2-detail-title { font-size: 18px; }
+}
 </style>`;
 
 const SM_STATUS_TONE = {
@@ -344,9 +381,72 @@ function sm_confirm_cancel(doctype, name, on_done) {
 	);
 }
 
+// Below this width, hand-built item grids swap their wide inline-editable row
+// for a "+ Add Item" button that opens a small popup instead — a full desktop
+// row (Item/Qty/Rate/Attachment/...) doesn't fit a phone screen without the
+// horizontal-scroll-vs-dropdown-clipping conflict every earlier attempt hit.
+function sm_is_mobile() {
+	// Identify the *device*, not the viewport — window.innerWidth alone is
+	// fooled by desktop browser zoom (falsely "mobile") and touch-point
+	// checks aren't reliably spoofed by every DevTools device emulation
+	// (falsely "desktop"). A phone/tablet's user agent is a stable signal
+	// either way, on a real device or an emulated one.
+	return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+}
+
+// Stand-ins for a real jQuery input / frappe.ui.form control, so a mobile
+// summary row can be built from the *same* itemRows array and read by the
+// *same* save-handler code (`row.$qty.val()`, `row.item_control.get_value()`,
+// ...) as a real desktop row — no separate mobile save path to keep in sync.
+function sm_fake_field(initial) {
+	let v = initial == null ? "" : initial;
+	return { val: (newVal) => (newVal === undefined ? v : (v = newVal)) };
+}
+function sm_fake_control(initial) {
+	let v = initial == null ? "" : initial;
+	return { get_value: () => v, set_value: (newVal) => (v = newVal == null ? "" : newVal) };
+}
+
+// One item's worth of fields in a popup (mobile-only "+ Add Item" flow).
+// Resolves with the saved values, or null if the dialog was dismissed.
+function sm_mobile_item_dialog({ title, fields, values, setup }) {
+	return new Promise((resolve) => {
+		let resolved = false;
+		const finish = (vals) => {
+			if (resolved) return;
+			resolved = true;
+			resolve(vals);
+			// Frappe's Dialog locks/unlocks background scroll (body overflow) on
+			// each modal's shown/hidden events using a plain flag, not a counter —
+			// opening these popups back-to-back (exactly this "+ Add Item" flow)
+			// can occasionally leave the page stuck non-scrollable, and Frappe's
+			// own open_dialogs bookkeeping isn't reliable enough here to gate the
+			// fix on. This app never stacks a second dialog on top of this one,
+			// so once *this* dialog is done, just unconditionally clear it.
+			setTimeout(() => $("body").css("overflow", ""), 350);
+		};
+		const d = new frappe.ui.Dialog({
+			title,
+			fields,
+			primary_action_label: __("Save"),
+			primary_action: (vals) => {
+				// Must resolve with the real values BEFORE hide() — hiding fires
+				// on_hide synchronously, and finish()'s own guard only works if
+				// "resolved" is already true by the time that runs.
+				finish(vals);
+				d.hide();
+			},
+			on_hide: () => finish(null),
+		});
+		if (setup) setup(d);
+		if (values) d.set_values(values);
+		d.show();
+	});
+}
+
 class ScrapManagementUI {
 	constructor(wrapper) {
-		this.page = frappe.ui.make_app_page({ parent: wrapper, title: "Scrap Management", single_column: true });
+		this.page = frappe.ui.make_app_page({ parent: wrapper, title: "Scrap Management", single_column: true, hide_sidebar: true });
 		$(this.page.main).css({ padding: 0 });
 		this.render_shell();
 		this.page.main.on("click", "[data-open-scrap]", (e) => this.open_scrap_detail($(e.currentTarget).data("open-scrap")));
@@ -383,7 +483,11 @@ class ScrapManagementUI {
 		this.page.main.html(`
 			${SM_STYLE}
 			<div id="sm2-root">
-				<aside class="sm2-sidebar">${nav_html}</aside>
+				<div class="sm2-mobile-backdrop"></div>
+				<aside class="sm2-sidebar">
+					<button type="button" class="sm2-mobile-close" aria-label="Close menu">&times;</button>
+					${nav_html}
+				</aside>
 				<main class="sm2-content">
 					<section class="sm2-page" id="sm2-dashboard"></section>
 					<section class="sm2-page" id="sm2-scrap"></section>
@@ -400,7 +504,17 @@ class ScrapManagementUI {
 			</div>
 		`);
 
-		this.page.main.find(".sm2-nav-btn").on("click", (e) => this.go($(e.currentTarget).data("page")));
+		this.page.main.find(".sm2-nav-btn").on("click", (e) => {
+			this.go($(e.currentTarget).data("page"));
+			this.page.main.find("#sm2-root").removeClass("sm2-mobile-nav-open");
+		});
+		this.page.main.find(".sm2-mobile-close, .sm2-mobile-backdrop").on("click", () => this.page.main.find("#sm2-root").removeClass("sm2-mobile-nav-open"));
+		// Repurpose Frappe's own page-head "sidebar toggle" icon (top-left, next to
+		// the breadcrumb) to open/close our sidebar instead — with hide_sidebar:true
+		// its normal job (collapsing the app-wide sidebar) is a no-op on this page,
+		// so this is the only sidebar-toggle affordance a mobile user needs.
+		// (.navbar-brand is only on v16's button, so match the class all versions share.)
+		this.page.wrapper.find(".sidebar-toggle-btn").on("click", () => this.page.main.find("#sm2-root").toggleClass("sm2-mobile-nav-open"));
 	}
 
 	go(key) {
@@ -586,6 +700,7 @@ class ScrapManagementUI {
 
 	_render_scrap_form(existingDoc) {
 		const isEdit = !!existingDoc;
+		const isMobileItems = sm_is_mobile();
 		this._detail_return_page = this._last_nav_page || "scrap";
 		this.page.main.find(".sm2-nav-btn").removeClass("active");
 		this.page.main.find(".sm2-page").removeClass("active");
@@ -610,7 +725,11 @@ class ScrapManagementUI {
 				<div style="padding:6px 18px 18px;">
 					<div class="sm2-item-grid">
 						<div class="sm2-item-grid-row sm2-item-grid-head">
-							<div style="flex:2;">Item</div><div style="flex:1.4;">Item Group</div><div style="flex:0.8;">Qty</div><div style="flex:0.8;">UOM</div><div style="flex:1.4;">Reason</div><div style="flex:1.4;">Image of Scrap <span style="color:var(--p-err);">*</span></div><div style="width:40px;flex:0 0 40px;"></div>
+							${
+								isMobileItems
+									? `<div style="flex:2;">Item</div><div style="flex:1;">Qty</div><div style="width:96px;flex:0 0 96px;"></div>`
+									: `<div style="flex:2;">Item</div><div style="flex:1.4;">Item Group</div><div style="flex:0.8;">Qty</div><div style="flex:0.8;">UOM</div><div style="flex:1.4;">Reason</div><div style="flex:1.4;">Image of Scrap <span style="color:var(--p-err);">*</span></div><div style="width:40px;flex:0 0 40px;"></div>`
+							}
 						</div>
 						<div id="sm2-item-rows"></div>
 						<div id="sm2-item-rows-empty" class="sm2-empty">No items added yet.</div>
@@ -681,6 +800,102 @@ class ScrapManagementUI {
 		const $rowsBody = $el.find("#sm2-item-rows");
 		const $emptyRow = $el.find("#sm2-item-rows-empty");
 
+		// ---- Mobile: "+ Add Item" opens a popup instead of an inline row ----
+		const mobileItemDialogFields = (dialogRefBox) => [
+			{
+				fieldtype: "Link",
+				fieldname: "item",
+				label: "Item",
+				options: "Item",
+				reqd: 1,
+				onchange: function () {
+					const item_code = this.get_value();
+					if (!item_code || !dialogRefBox.d) return;
+					frappe.db.get_value("Item", item_code, ["stock_uom", "item_group"]).then((r) => {
+						if (r.message) {
+							dialogRefBox.d.set_value("item_group_display", r.message.item_group || "");
+							dialogRefBox.d.set_value("uom_display", r.message.stock_uom || "");
+						}
+					});
+				},
+			},
+			{ fieldtype: "Data", fieldname: "item_group_display", label: "Item Group", read_only: 1 },
+			{ fieldtype: "Column Break" },
+			{ fieldtype: "Float", fieldname: "qty", label: "Qty", reqd: 1 },
+			{ fieldtype: "Data", fieldname: "uom_display", label: "UOM", read_only: 1 },
+			{ fieldtype: "Section Break" },
+			{ fieldtype: "Data", fieldname: "reason", label: "Reason" },
+			{ fieldtype: "Attach Image", fieldname: "attachment", label: "Image of Scrap", reqd: 1 },
+		];
+
+		const renderMobileRow = (row) => {
+			const $row = $(`<div class="sm2-item-grid-row">
+				<div style="flex:2;min-width:0;" class="sm2-mobile-item-name"></div>
+				<div style="flex:1;min-width:0;" class="sm2-mobile-item-qty"></div>
+				<div style="width:96px;flex:0 0 96px;white-space:nowrap;">
+					<button type="button" class="sm2-btn" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-edit>Edit</button>
+					<button type="button" class="sm2-btn danger" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-remove>&times;</button>
+				</div>
+			</div>`);
+			$rowsBody.append($row);
+			row.$dom = $row;
+			$row.find("[data-mobile-edit]").on("click", () => openMobileItemDialog(row));
+			$row.find("[data-mobile-remove]").on("click", () => {
+				itemRows.splice(itemRows.indexOf(row), 1);
+				$row.remove();
+				if (!itemRows.length) $emptyRow.show();
+			});
+		};
+
+		const refreshMobileRowText = (row) => {
+			row.$dom.find(".sm2-mobile-item-name").text(row.item_control.get_value() || "—");
+			row.$dom.find(".sm2-mobile-item-qty").text(`${row.$qty.val() || 0} ${row.$uom.val() || ""}`.trim());
+		};
+
+		// `row` is null when opened from "+ Add Item" (nothing to show until saved);
+		// otherwise it's an existing row being edited.
+		const openMobileItemDialog = (row) => {
+			const dialogRefBox = {};
+			sm_mobile_item_dialog({
+				title: row ? __("Edit Item") : __("Add Item"),
+				fields: mobileItemDialogFields(dialogRefBox),
+				values: row
+					? {
+							item: row.item_control.get_value(),
+							item_group_display: row.$category.val(),
+							qty: row.$qty.val(),
+							uom_display: row.$uom.val(),
+							reason: row.$reason.val(),
+							attachment: row.attach_control.get_value(),
+					  }
+					: null,
+				setup: (d) => (dialogRefBox.d = d),
+			}).then((vals) => {
+				if (!vals) return;
+				if (!row) {
+					$emptyRow.hide();
+					row = {
+						item_control: sm_fake_control(),
+						attach_control: sm_fake_control(),
+						$category: sm_fake_field(),
+						$qty: sm_fake_field(),
+						$uom: sm_fake_field(),
+						$reason: sm_fake_field(),
+					};
+					itemRows.push(row);
+					renderMobileRow(row);
+				}
+				row.item_control.set_value(vals.item);
+				row.$category.val(vals.item_group_display);
+				row.$qty.val(vals.qty);
+				row.$uom.val(vals.uom_display);
+				row.$reason.val(vals.reason);
+				row.attach_control.set_value(vals.attachment);
+				refreshMobileRowText(row);
+			});
+		};
+
+		// ---- Desktop: full inline editable row ----
 		const addItemRow = (data) => {
 			$emptyRow.hide();
 			const $row = $(`<div class="sm2-item-grid-row">
@@ -744,9 +959,33 @@ class ScrapManagementUI {
 			});
 		};
 
-		$el.find("#sm2-add-item-row").on("click", () => addItemRow());
-		if (isEdit && existingDoc.items.length) existingDoc.items.forEach((row) => addItemRow(row));
-		else addItemRow();
+		// A prefilled row (edit mode) always renders directly, on both desktop and
+		// mobile, since it's already complete — only a brand-new "+ Add Item" tap
+		// goes through the popup on mobile.
+		const addMobileExistingRow = (data) => {
+			$emptyRow.hide();
+			const row = {
+				item_control: sm_fake_control(data.item),
+				attach_control: sm_fake_control(data.attachment),
+				$category: sm_fake_field(data.scrap_category),
+				$qty: sm_fake_field(data.qty),
+				$uom: sm_fake_field(data.uom),
+				$reason: sm_fake_field(data.reason),
+			};
+			itemRows.push(row);
+			renderMobileRow(row);
+			refreshMobileRowText(row);
+		};
+
+		$el.find("#sm2-add-item-row").on("click", () => {
+			if (isMobileItems) openMobileItemDialog(null);
+			else addItemRow();
+		});
+		if (isEdit && existingDoc.items.length) {
+			existingDoc.items.forEach((row) => (isMobileItems ? addMobileExistingRow(row) : addItemRow(row)));
+		} else if (!isMobileItems) {
+			addItemRow();
+		}
 
 		$el.find("#sm2-new-scrap-save").on("click", () => {
 			const values = fg.get_values();
@@ -1350,6 +1589,7 @@ class ScrapManagementUI {
 			const scraps = r.message || [];
 			const scrapByName = {};
 			scraps.forEach((s) => (scrapByName[s.name] = s));
+			const isMobileItems = sm_is_mobile();
 			// Users identify by Quotation, not by the Scrap ID behind it — label each
 			// option with its Quotation, keeping the Scrap in parentheses only to stay
 			// unique when one Quotation bundles more than one Scrap.
@@ -1396,7 +1636,11 @@ class ScrapManagementUI {
 						<div id="sm2-new-so-manual" style="display:none;">
 							<div class="sm2-item-grid">
 								<div class="sm2-item-grid-row sm2-item-grid-head">
-									<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="flex:1.2;">Attachment</div><div style="width:40px;flex:0 0 40px;"></div>
+									${
+										isMobileItems
+											? `<div style="flex:2;">Item</div><div style="flex:1;">Amount</div><div style="width:96px;flex:0 0 96px;"></div>`
+											: `<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="flex:1.2;">Attachment</div><div style="width:40px;flex:0 0 40px;"></div>`
+									}
 								</div>
 								<div id="sm2-new-so-manual-rows"></div>
 								<div id="sm2-new-so-manual-empty" class="sm2-empty">No items added yet.</div>
@@ -1502,6 +1746,59 @@ class ScrapManagementUI {
 			const $manualBody = $el.find("#sm2-new-so-manual-rows");
 			const $manualEmpty = $el.find("#sm2-new-so-manual-empty");
 
+			const soMobileDialogFields = () => [
+				{ fieldtype: "Link", fieldname: "item_code", label: "Item", options: "Item", reqd: 1 },
+				{ fieldtype: "Float", fieldname: "qty", label: "Qty", reqd: 1 },
+				{ fieldtype: "Column Break" },
+				{ fieldtype: "Currency", fieldname: "rate", label: "Rate" },
+				{ fieldtype: "Attach", fieldname: "custom_attachment", label: "Attachment" },
+			];
+			const renderSoMobileRow = (row) => {
+				const $row = $(`<div class="sm2-item-grid-row">
+					<div style="flex:2;min-width:0;" class="sm2-mobile-item-name"></div>
+					<div style="flex:1;min-width:0;" class="sm2-mono sm2-mobile-item-amount"></div>
+					<div style="width:96px;flex:0 0 96px;white-space:nowrap;">
+						<button type="button" class="sm2-btn" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-edit>Edit</button>
+						<button type="button" class="sm2-btn danger" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-remove>&times;</button>
+					</div>
+				</div>`);
+				$manualBody.append($row);
+				row.$dom = $row;
+				$row.find("[data-mobile-edit]").on("click", () => openSoMobileDialog(row));
+				$row.find("[data-mobile-remove]").on("click", () => {
+					manualRows.splice(manualRows.indexOf(row), 1);
+					$row.remove();
+					if (!manualRows.length) $manualEmpty.show();
+				});
+			};
+			const refreshSoMobileRowText = (row) => {
+				const amount = (parseFloat(row.$qty.val()) || 0) * (parseFloat(row.$rate.val()) || 0);
+				row.$dom.find(".sm2-mobile-item-name").text(row.item_control.get_value() || "—");
+				row.$dom.find(".sm2-mobile-item-amount").text(sm_money(amount));
+			};
+			const openSoMobileDialog = (row) => {
+				sm_mobile_item_dialog({
+					title: row ? __("Edit Item") : __("Add Item"),
+					fields: soMobileDialogFields(),
+					values: row
+						? { item_code: row.item_control.get_value(), qty: row.$qty.val(), rate: row.$rate.val(), custom_attachment: row.attach_control.get_value() }
+						: null,
+				}).then((vals) => {
+					if (!vals) return;
+					if (!row) {
+						$manualEmpty.hide();
+						row = { item_control: sm_fake_control(), attach_control: sm_fake_control(), $qty: sm_fake_field(), $rate: sm_fake_field() };
+						manualRows.push(row);
+						renderSoMobileRow(row);
+					}
+					row.item_control.set_value(vals.item_code);
+					row.$qty.val(vals.qty);
+					row.$rate.val(vals.rate);
+					row.attach_control.set_value(vals.custom_attachment);
+					refreshSoMobileRowText(row);
+				});
+			};
+
 			const addManualRow = () => {
 				$manualEmpty.hide();
 				const $row = $(`<div class="sm2-item-grid-row">
@@ -1541,8 +1838,11 @@ class ScrapManagementUI {
 					if (!manualRows.length) $manualEmpty.show();
 				});
 			};
-			$el.find("#sm2-new-so-add-item").on("click", addManualRow);
-			addManualRow();
+			$el.find("#sm2-new-so-add-item").on("click", () => {
+				if (isMobileItems) openSoMobileDialog(null);
+				else addManualRow();
+			});
+			if (!isMobileItems) addManualRow();
 
 			$el.find("#sm2-new-so-save").on("click", () => {
 				const values = fg.get_values();
@@ -1833,6 +2133,7 @@ class ScrapManagementUI {
 			const dns = r.message || [];
 			const dnByName = {};
 			dns.forEach((d) => (dnByName[d.name] = d));
+			const isMobileItems = sm_is_mobile();
 
 			this._detail_return_page = this._last_nav_page || "salesinvoice";
 			this.page.main.find(".sm2-nav-btn").removeClass("active");
@@ -1868,7 +2169,11 @@ class ScrapManagementUI {
 						<div id="sm2-new-si2-manual" style="display:none;">
 							<div class="sm2-item-grid">
 								<div class="sm2-item-grid-row sm2-item-grid-head">
-									<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="width:40px;flex:0 0 40px;"></div>
+									${
+										isMobileItems
+											? `<div style="flex:2;">Item</div><div style="flex:1;">Amount</div><div style="width:96px;flex:0 0 96px;"></div>`
+											: `<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="width:40px;flex:0 0 40px;"></div>`
+									}
 								</div>
 								<div id="sm2-new-si2-manual-rows"></div>
 								<div id="sm2-new-si2-manual-empty" class="sm2-empty">No items added yet.</div>
@@ -1955,6 +2260,55 @@ class ScrapManagementUI {
 			const $manualBody = $el.find("#sm2-new-si2-manual-rows");
 			const $manualEmpty = $el.find("#sm2-new-si2-manual-empty");
 
+			const siMobileDialogFields = () => [
+				{ fieldtype: "Link", fieldname: "item_code", label: "Item", options: "Item", reqd: 1 },
+				{ fieldtype: "Column Break" },
+				{ fieldtype: "Float", fieldname: "qty", label: "Qty", reqd: 1 },
+				{ fieldtype: "Currency", fieldname: "rate", label: "Rate" },
+			];
+			const renderSiMobileRow = (row) => {
+				const $row = $(`<div class="sm2-item-grid-row">
+					<div style="flex:2;min-width:0;" class="sm2-mobile-item-name"></div>
+					<div style="flex:1;min-width:0;" class="sm2-mono sm2-mobile-item-amount"></div>
+					<div style="width:96px;flex:0 0 96px;white-space:nowrap;">
+						<button type="button" class="sm2-btn" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-edit>Edit</button>
+						<button type="button" class="sm2-btn danger" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-remove>&times;</button>
+					</div>
+				</div>`);
+				$manualBody.append($row);
+				row.$dom = $row;
+				$row.find("[data-mobile-edit]").on("click", () => openSiMobileDialog(row));
+				$row.find("[data-mobile-remove]").on("click", () => {
+					manualRows.splice(manualRows.indexOf(row), 1);
+					$row.remove();
+					if (!manualRows.length) $manualEmpty.show();
+				});
+			};
+			const refreshSiMobileRowText = (row) => {
+				const amount = (parseFloat(row.$qty.val()) || 0) * (parseFloat(row.$rate.val()) || 0);
+				row.$dom.find(".sm2-mobile-item-name").text(row.item_control.get_value() || "—");
+				row.$dom.find(".sm2-mobile-item-amount").text(sm_money(amount));
+			};
+			const openSiMobileDialog = (row) => {
+				sm_mobile_item_dialog({
+					title: row ? __("Edit Item") : __("Add Item"),
+					fields: siMobileDialogFields(),
+					values: row ? { item_code: row.item_control.get_value(), qty: row.$qty.val(), rate: row.$rate.val() } : null,
+				}).then((vals) => {
+					if (!vals) return;
+					if (!row) {
+						$manualEmpty.hide();
+						row = { item_control: sm_fake_control(), $qty: sm_fake_field(), $rate: sm_fake_field() };
+						manualRows.push(row);
+						renderSiMobileRow(row);
+					}
+					row.item_control.set_value(vals.item_code);
+					row.$qty.val(vals.qty);
+					row.$rate.val(vals.rate);
+					refreshSiMobileRowText(row);
+				});
+			};
+
 			const addManualRow = () => {
 				$manualEmpty.hide();
 				const $row = $(`<div class="sm2-item-grid-row">
@@ -1986,8 +2340,11 @@ class ScrapManagementUI {
 					if (!manualRows.length) $manualEmpty.show();
 				});
 			};
-			$el.find("#sm2-new-si2-add-item").on("click", addManualRow);
-			addManualRow();
+			$el.find("#sm2-new-si2-add-item").on("click", () => {
+				if (isMobileItems) openSiMobileDialog(null);
+				else addManualRow();
+			});
+			if (!isMobileItems) addManualRow();
 
 			$el.find("#sm2-new-si2-save").on("click", () => {
 				const values = fg.get_values();
@@ -2764,6 +3121,7 @@ class ScrapManagementUI {
 	}
 
 	_render_new_quotation_form(eligibleScraps, preselected_scrap) {
+		const isMobileItems = sm_is_mobile();
 		this._detail_return_page = this._last_nav_page || "quotation";
 		this.page.main.find(".sm2-nav-btn").removeClass("active");
 		this.page.main.find(".sm2-page").removeClass("active");
@@ -2802,7 +3160,11 @@ class ScrapManagementUI {
 					<div id="sm2-quote-items-fromscrap">
 						<div class="sm2-item-grid">
 							<div class="sm2-item-grid-row sm2-item-grid-head">
-								<div style="flex:1.6;">Item</div><div style="flex:1.2;">Scrap</div><div style="flex:0.7;">Qty</div><div style="flex:0.7;">UOM</div><div style="flex:1;">Quotation Rate</div><div style="flex:1;">Quotation Amount</div><div style="flex:1.2;">Attachment</div>
+								${
+									isMobileItems
+										? `<div style="flex:2;">Item</div><div style="flex:1;">Amount</div><div style="width:60px;flex:0 0 60px;"></div>`
+										: `<div style="flex:1.6;">Item</div><div style="flex:1.2;">Scrap</div><div style="flex:0.7;">Qty</div><div style="flex:0.7;">UOM</div><div style="flex:1;">Quotation Rate</div><div style="flex:1;">Quotation Amount</div><div style="flex:1.2;">Attachment</div>`
+								}
 							</div>
 							<div id="sm2-quote-item-rows"></div>
 							<div id="sm2-quote-item-rows-empty" class="sm2-empty">Add a Scrap above to pull in its items.</div>
@@ -2811,7 +3173,11 @@ class ScrapManagementUI {
 					<div id="sm2-quote-items-manual" style="display:none;">
 						<div class="sm2-item-grid">
 							<div class="sm2-item-grid-row sm2-item-grid-head">
-								<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="width:40px;flex:0 0 40px;"></div>
+								${
+									isMobileItems
+										? `<div style="flex:2;">Item</div><div style="flex:1;">Amount</div><div style="width:96px;flex:0 0 96px;"></div>`
+										: `<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div><div style="width:40px;flex:0 0 40px;"></div>`
+								}
 							</div>
 							<div id="sm2-quote-manual-rows"></div>
 							<div id="sm2-quote-manual-empty" class="sm2-empty">No items added yet.</div>
@@ -2858,6 +3224,55 @@ class ScrapManagementUI {
 		const quoteManualRows = [];
 		const $quoteManualBody = $el.find("#sm2-quote-manual-rows");
 		const $quoteManualEmpty = $el.find("#sm2-quote-manual-empty");
+		const quoteMobileDialogFields = () => [
+			{ fieldtype: "Link", fieldname: "item_code", label: "Item", options: "Item", reqd: 1 },
+			{ fieldtype: "Column Break" },
+			{ fieldtype: "Float", fieldname: "qty", label: "Qty", reqd: 1 },
+			{ fieldtype: "Currency", fieldname: "rate", label: "Rate" },
+		];
+		const renderQuoteMobileRow = (row) => {
+			const $row = $(`<div class="sm2-item-grid-row">
+				<div style="flex:2;min-width:0;" class="sm2-mobile-item-name"></div>
+				<div style="flex:1;min-width:0;" class="sm2-mono sm2-mobile-item-amount"></div>
+				<div style="width:96px;flex:0 0 96px;white-space:nowrap;">
+					<button type="button" class="sm2-btn" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-edit>Edit</button>
+					<button type="button" class="sm2-btn danger" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-remove>&times;</button>
+				</div>
+			</div>`);
+			$quoteManualBody.append($row);
+			row.$dom = $row;
+			$row.find("[data-mobile-edit]").on("click", () => openQuoteMobileDialog(row));
+			$row.find("[data-mobile-remove]").on("click", () => {
+				quoteManualRows.splice(quoteManualRows.indexOf(row), 1);
+				$row.remove();
+				if (!quoteManualRows.length) $quoteManualEmpty.show();
+			});
+		};
+		const refreshQuoteMobileRowText = (row) => {
+			const amount = (parseFloat(row.$qty.val()) || 0) * (parseFloat(row.$rate.val()) || 0);
+			row.$dom.find(".sm2-mobile-item-name").text(row.item_control.get_value() || "—");
+			row.$dom.find(".sm2-mobile-item-amount").text(sm_money(amount));
+		};
+		const openQuoteMobileDialog = (row) => {
+			sm_mobile_item_dialog({
+				title: row ? __("Edit Item") : __("Add Item"),
+				fields: quoteMobileDialogFields(),
+				values: row ? { item_code: row.item_control.get_value(), qty: row.$qty.val(), rate: row.$rate.val() } : null,
+			}).then((vals) => {
+				if (!vals) return;
+				if (!row) {
+					$quoteManualEmpty.hide();
+					row = { item_control: sm_fake_control(), $qty: sm_fake_field(), $rate: sm_fake_field() };
+					quoteManualRows.push(row);
+					renderQuoteMobileRow(row);
+				}
+				row.item_control.set_value(vals.item_code);
+				row.$qty.val(vals.qty);
+				row.$rate.val(vals.rate);
+				refreshQuoteMobileRowText(row);
+			});
+		};
+
 		const addQuoteManualRow = () => {
 			$quoteManualEmpty.hide();
 			const $row = $(`<div class="sm2-item-grid-row">
@@ -2889,8 +3304,11 @@ class ScrapManagementUI {
 				if (!quoteManualRows.length) $quoteManualEmpty.show();
 			});
 		};
-		$el.find("#sm2-quote-add-item").on("click", addQuoteManualRow);
-		addQuoteManualRow();
+		$el.find("#sm2-quote-add-item").on("click", () => {
+			if (isMobileItems) openQuoteMobileDialog(null);
+			else addQuoteManualRow();
+		});
+		if (!isMobileItems) addQuoteManualRow();
 
 		const scrapRows = [];
 		const $scrapRowsBody = $el.find("#sm2-scrap-rows");
@@ -2912,6 +3330,57 @@ class ScrapManagementUI {
 			frappe.call({ method: "scrap_management.api.get_scrap_items_by_parent", args: { scrap_names: scrapNames } }).then((r) => {
 				const items = r.message || [];
 				$itemsEmpty.toggle(!items.length);
+
+				if (isMobileItems) {
+					// Same data model (qtyByKey/rateByKey/attachByKey, and the exact
+					// .sm2-quote-qty/.sm2-quote-rate/data-* markers the save handler
+					// reads) — just hidden here, with a popup to edit Qty/Rate/
+					// Attachment instead of three cramped inline inputs per item.
+					$itemsBody.html(
+						items
+							.map((it) => {
+								const key = `${it.parent}::${it.item}`;
+								const rate = rateByKey[key] || 0;
+								const qty = qtyByKey[key] ?? it.qty;
+								return `<div class="sm2-item-grid-row" data-key="${key}" data-scrap="${it.parent}" data-item="${it.item}" data-uom="${it.uom || ""}">
+									<div style="flex:2;min-width:0;" class="sm2-mobile-item-name">${frappe.utils.escape_html(it.item_name || it.item)}</div>
+									<div style="flex:1;min-width:0;" class="sm2-mono sm2-quote-amount">${sm_money(flt(rate) * flt(qty))}</div>
+									<div style="width:60px;flex:0 0 60px;"><button type="button" class="sm2-btn" style="padding:0 8px;height:26px;font-size:11px;" data-mobile-edit-quote-item>Edit</button></div>
+									<input type="hidden" class="sm2-quote-qty" value="${qty}">
+									<input type="hidden" class="sm2-quote-rate" value="${rate}">
+								</div>`;
+							})
+							.join("")
+					);
+					$itemsBody.find(".sm2-item-grid-row").each((_, el) => {
+						const $row = $(el);
+						attachControls[$row.data("key")] = sm_fake_control(attachByKey[$row.data("key")]);
+					});
+					$itemsBody.find("[data-mobile-edit-quote-item]").on("click", (e) => {
+						const $row = $(e.currentTarget).closest(".sm2-item-grid-row");
+						const key = $row.data("key");
+						sm_mobile_item_dialog({
+							title: __("Item Details"),
+							fields: [
+								{ fieldtype: "Float", fieldname: "qty", label: "Qty", reqd: 1 },
+								{ fieldtype: "Currency", fieldname: "rate", label: "Quotation Rate" },
+								{ fieldtype: "Attach", fieldname: "custom_attachment", label: "Attachment" },
+							],
+							values: { qty: $row.find(".sm2-quote-qty").val(), rate: $row.find(".sm2-quote-rate").val(), custom_attachment: attachByKey[key] },
+						}).then((vals) => {
+							if (!vals) return;
+							qtyByKey[key] = flt(vals.qty);
+							rateByKey[key] = flt(vals.rate);
+							attachByKey[key] = vals.custom_attachment;
+							attachControls[key] = sm_fake_control(vals.custom_attachment);
+							$row.find(".sm2-quote-qty").val(vals.qty);
+							$row.find(".sm2-quote-rate").val(vals.rate);
+							$row.find(".sm2-quote-amount").text(sm_money(flt(vals.qty) * flt(vals.rate)));
+						});
+					});
+					return;
+				}
+
 				$itemsBody.html(
 					items
 						.map((it) => {

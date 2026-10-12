@@ -5,6 +5,13 @@ app_description = "Scrap Management app for Scrap Entry to Closure lifecycle"
 app_email = "admin@raisonigroup.duxdigitech.in"
 app_license = "mit"
 
+required_apps = ["erpnext"]
+
+# Workflow fixtures link to Workflow State / Workflow Action Master records that a
+# fresh site does not have — create them before fixtures are synced.
+before_install = "scrap_management.scrap_management.install.ensure_workflow_masters"
+before_migrate = "scrap_management.scrap_management.install.ensure_workflow_masters"
+
 # Desk theme, scoped at runtime (scrap_management.js) to Scrap Management's own
 # screens only — see public/js/scrap_management.js for the route guard.
 app_include_css = "/assets/scrap_management/css/scrap_management.css"
