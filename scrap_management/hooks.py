@@ -12,6 +12,11 @@ required_apps = ["erpnext"]
 before_install = "scrap_management.scrap_management.install.ensure_workflow_masters"
 before_migrate = "scrap_management.scrap_management.install.ensure_workflow_masters"
 
+# Role permissions on standard doctypes (Quotation, Sales Order, ...) — applied after
+# fixtures have created the roles, so every site pulling this app gets the same access.
+after_install = "scrap_management.scrap_management.install.setup_role_permissions"
+after_migrate = "scrap_management.scrap_management.install.setup_role_permissions"
+
 # Desk theme, scoped at runtime (scrap_management.js) to Scrap Management's own
 # screens only — see public/js/scrap_management.js for the route guard.
 app_include_css = "/assets/scrap_management/css/scrap_management.css"
@@ -61,7 +66,17 @@ fixtures = [
 			]
 		],
 	},
-	{"dt": "Role", "filters": [["name", "in", ["Scrap Creator", "Scrap Approver", "Quotation Approver", "Security User"]]]},
+	{"dt": "Role", "filters": [["name", "in", [
+			"Scrap Creator",
+			"Scrap Approver",
+			"Quotation Approver",
+			"Security User",
+			"Scrap Quotations Creator",
+			"Scrap Sale Order Creator",
+			"Scrap Delivery Note",
+			"Scrap Sales invoice",
+			"Scrap Payment Entry",
+		]]]},
 	{"dt": "Workflow", "filters": [["name", "in", ["Scrap Approval Workflow", "Quotation Approval Workflow"]]]},
 ]
 

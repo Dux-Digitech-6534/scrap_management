@@ -444,11 +444,40 @@ function sm_mobile_item_dialog({ title, fields, values, setup }) {
 	});
 }
 
+// Hide menu entries and action buttons the current user has no right to use.
+// Elements declare what they need via data-sm-perm="create:Quotation" (ptype:doctype,
+// or "approve:Quotation" for the approval workflow); the server still enforces the
+// same rules on save, this only keeps the screen from offering what will fail.
+function sm_has_perm(spec) {
+	if (!spec) return true;
+	const i = spec.indexOf(":");
+	const ptype = spec.slice(0, i);
+	const doctype = spec.slice(i + 1);
+	if (ptype === "approve") return ["Quotation Approver", "System Manager"].some((r) => frappe.user_roles.includes(r));
+	const check = {
+		read: frappe.model.can_read,
+		create: frappe.model.can_create,
+		write: frappe.model.can_write,
+		submit: frappe.model.can_submit,
+	}[ptype];
+	return check ? !!check(doctype) : true;
+}
+
+function sm_watch_perms($root) {
+	const prune = () =>
+		$root.find("[data-sm-perm]").each(function () {
+			if (!sm_has_perm(this.getAttribute("data-sm-perm"))) $(this).remove();
+		});
+	prune();
+	new MutationObserver(prune).observe($root[0], { childList: true, subtree: true });
+}
+
 class ScrapManagementUI {
 	constructor(wrapper) {
 		this.page = frappe.ui.make_app_page({ parent: wrapper, title: "Scrap Management", single_column: true, hide_sidebar: true });
 		$(this.page.main).css({ padding: 0 });
 		this.render_shell();
+		sm_watch_perms(this.page.main);
 		this.page.main.on("click", "[data-open-scrap]", (e) => this.open_scrap_detail($(e.currentTarget).data("open-scrap")));
 		this.page.main.on("click", "[data-open-entity]", (e) => {
 			const [doctype, name] = $(e.currentTarget).data("open-entity").split("|");
@@ -460,19 +489,19 @@ class ScrapManagementUI {
 	render_shell() {
 		const NAV = [
 			{ key: "dashboard", label: "Dashboard", icon: "layers" },
-			{ key: "scrap", label: "Scrap Entry", group: "Scrap Process", icon: "box" },
-			{ key: "stock", label: "Scrap Stock", icon: "building" },
-			{ key: "quotation", label: "Quotations", icon: "copy" },
-			{ key: "salesorder", label: "Sales Order", icon: "truck" },
-			{ key: "deliverynote", label: "Delivery Note", icon: "note" },
-			{ key: "salesinvoice", label: "Sales Invoice", icon: "inbox" },
-			{ key: "paymententry", label: "Payment Entry", icon: "rupee" },
-			{ key: "closure", label: "Closure", icon: "check" },
-			{ key: "report", label: "Scrap Report", group: "Reports", icon: "search" },
+			{ key: "scrap", label: "Scrap Entry", perm: "read:Scrap", group: "Scrap Process", icon: "box" },
+			{ key: "stock", label: "Scrap Stock", perm: "read:Scrap", icon: "building" },
+			{ key: "quotation", label: "Quotations", perm: "read:Quotation", icon: "copy" },
+			{ key: "salesorder", label: "Sales Order", perm: "read:Sales Order", icon: "truck" },
+			{ key: "deliverynote", label: "Delivery Note", perm: "read:Delivery Note", icon: "note" },
+			{ key: "salesinvoice", label: "Sales Invoice", perm: "read:Sales Invoice", icon: "inbox" },
+			{ key: "paymententry", label: "Payment Entry", perm: "read:Payment Entry", icon: "rupee" },
+			{ key: "closure", label: "Closure", perm: "read:Scrap", icon: "check" },
+			{ key: "report", label: "Scrap Report", perm: "read:Scrap", group: "Reports", icon: "search" },
 		];
 		let nav_html = "";
 		let last_group = null;
-		NAV.forEach((n) => {
+		NAV.filter((n) => sm_has_perm(n.perm)).forEach((n) => {
 			if (n.group && n.group !== last_group) {
 				nav_html += `<div class="sm2-nav-label">${n.group}</div>`;
 				last_group = n.group;
@@ -606,7 +635,7 @@ class ScrapManagementUI {
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Scrap Entry</h1>
 			<p class="sm2-sub">The only custom transaction DocType. Approval auto-creates a real ERPNext Stock Entry.</p></div>
-			<button class="sm2-btn primary" id="sm2-new-scrap-btn">+ New Scrap</button></div>
+			<button class="sm2-btn primary" id="sm2-new-scrap-btn" data-sm-perm="create:Scrap">+ New Scrap</button></div>
 			<div class="sm2-card">
 				<div class="sm2-head"><h3>Scrap List</h3>
 					<div class="sm2-toolbar">
@@ -1200,12 +1229,12 @@ class ScrapManagementUI {
 		});
 		if (doc.status === "Available for Sale" || doc.status === "Quotation in Process") {
 			$actions.append(
-				$(`<button class="sm2-btn primary">+ Quotation</button>`).on("click", () => this.open_new_quotation(doc.name))
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Quotation">+ Quotation</button>`).on("click", () => this.open_new_quotation(doc.name))
 			);
 		}
 		if (doc.selected_quotation && !doc.sales_order && (doc.items || []).some((r) => flt(r.available_qty) > 0)) {
 			$actions.append(
-				$(`<button class="sm2-btn primary">+ Sales Order</button>`).on("click", () =>
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Sales Order">+ Sales Order</button>`).on("click", () =>
 					this.create_sales_order_flow(doc.selected_quotation, doc.name)
 				)
 			);
@@ -1338,7 +1367,7 @@ class ScrapManagementUI {
 		// transition throw "Illegal Document Status".
 		if (doc.docstatus === 0 && doctype !== "Quotation") {
 			$actions.append(
-				$(`<button class="sm2-btn primary">Submit</button>`).on("click", () => {
+				$(`<button class="sm2-btn primary" data-sm-perm="submit:${doctype}">Submit</button>`).on("click", () => {
 					frappe.call({ method: "frappe.client.submit", args: { doc }, freeze: true }).then(() => {
 						frappe.show_alert({ message: __("{0} submitted.", [doc.name]), indicator: "green" });
 						this.open_entity_detail(doctype, doc.name);
@@ -1364,7 +1393,7 @@ class ScrapManagementUI {
 				(doc.custom_scraps || []).forEach((row) => {
 					if (row.selected && !(doc.__so_by_scrap || {})[row.scrap]) {
 						$actions.append(
-							$(`<button class="sm2-btn primary">Create Sales Order — ${row.scrap}</button>`).on("click", () =>
+							$(`<button class="sm2-btn primary" data-sm-perm="create:Sales Order">Create Sales Order — ${row.scrap}</button>`).on("click", () =>
 								this.create_sales_order_flow(doc.name, row.scrap)
 							)
 						);
@@ -1375,7 +1404,7 @@ class ScrapManagementUI {
 
 		if (doctype === "Sales Order" && flt(doc.per_delivered) < 100) {
 			$actions.append(
-				$(`<button class="sm2-btn primary">Create Delivery Note</button>`).on("click", () =>
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Delivery Note">Create Delivery Note</button>`).on("click", () =>
 					this.create_delivery_note_flow(doc.name, (name) => this.open_entity_detail("Delivery Note", name))
 				)
 			);
@@ -1383,7 +1412,7 @@ class ScrapManagementUI {
 
 		if (doctype === "Delivery Note" && flt(doc.per_billed) < 100) {
 			$actions.append(
-				$(`<button class="sm2-btn primary">Create Sales Invoice</button>`).on("click", () =>
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice">Create Sales Invoice</button>`).on("click", () =>
 					this.create_sales_invoice_flow(doc.name, (name) => this.open_entity_detail("Sales Invoice", name))
 				)
 			);
@@ -1391,7 +1420,7 @@ class ScrapManagementUI {
 
 		if (doctype === "Sales Invoice" && doc.docstatus === 1 && flt(doc.outstanding_amount) > 0) {
 			$actions.append(
-				$(`<button class="sm2-btn primary">Record Payment</button>`).on("click", () =>
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Payment Entry">Record Payment</button>`).on("click", () =>
 					this.open_payment_dialog(doc.name, doc.custom_scrap, (name) => this.open_entity_detail("Payment Entry", name))
 				)
 			);
@@ -1416,7 +1445,7 @@ class ScrapManagementUI {
 		const printInfo = { salesorder: ["Sales Order", "Sales Order Print"] }[pageKey];
 		frappe.call({ method: "scrap_management.api.get_report", args: { report_name: reportName } }).then((r) => {
 			const { columns, data } = r.message || { columns: [], data: [] };
-			const newSoBtn = pageKey === "salesorder" ? `<button class="sm2-btn primary" id="sm2-new-so-btn">+ Create Sales Order</button>` : "";
+			const newSoBtn = pageKey === "salesorder" ? `<button class="sm2-btn primary" id="sm2-new-so-btn" data-sm-perm="create:Sales Order">+ Create Sales Order</button>` : "";
 			$el.html(`
 				<div class="sm2-hero"><div><h1 class="sm2-title">${reportName.replace("Scrap ", "")}</h1></div>${newSoBtn}</div>
 				<div class="sm2-card"><div class="sm2-tablewrap">
@@ -1983,7 +2012,7 @@ class ScrapManagementUI {
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Sales Invoice</h1>
 			<p class="sm2-sub">Standard ERPNext Sales Invoices linked to Scrap via <span class="sm2-mono">custom_scrap</span>.</p></div>
-			<button class="sm2-btn primary" id="sm2-new-si-btn">+ New Sales Invoice</button></div>
+			<button class="sm2-btn primary" id="sm2-new-si-btn" data-sm-perm="create:Sales Invoice">+ New Sales Invoice</button></div>
 			<div class="sm2-card"><div class="sm2-tablewrap" id="sm2-si-table"><div class="sm2-empty">Loading…</div></div></div>
 		`);
 		$el.find("#sm2-new-si-btn").on("click", () => this.open_new_sales_invoice());
@@ -2022,7 +2051,7 @@ class ScrapManagementUI {
 									<button class="sm2-btn" data-si-print="${row.name}">Print</button>
 									${
 										row.docstatus === 1 && flt(row.outstanding_amount) > 0
-											? ` <button class="sm2-btn primary" data-si-pay="${row.name}" data-scrap="${row.custom_scrap}">Record Payment</button>`
+											? ` <button class="sm2-btn primary" data-sm-perm="create:Payment Entry" data-si-pay="${row.name}" data-scrap="${row.custom_scrap}">Record Payment</button>`
 											: ""
 									}
 									${
@@ -2057,7 +2086,7 @@ class ScrapManagementUI {
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Payment Entry</h1>
 			<p class="sm2-sub">Standard ERPNext Payment Entries linked to Scrap via <span class="sm2-mono">custom_scrap</span>.</p></div>
-			<button class="sm2-btn primary" id="sm2-new-pe-btn">+ New Payment Entry</button></div>
+			<button class="sm2-btn primary" id="sm2-new-pe-btn" data-sm-perm="create:Payment Entry">+ New Payment Entry</button></div>
 			<div class="sm2-card"><div class="sm2-tablewrap" id="sm2-pe-table"><div class="sm2-empty">Loading…</div></div></div>
 		`);
 		$el.find("#sm2-new-pe-btn").on("click", () => this.open_new_payment_entry());
@@ -2650,11 +2679,11 @@ class ScrapManagementUI {
 	closure_action_button(row) {
 		if (row.status === "Closed") return `<span class="sm2-pill ok">Closed</span>`;
 		if (!row.delivery_note)
-			return `<button class="sm2-btn primary" data-closure-action="delivery-note" data-so="${row.sales_order}">Create Delivery Note</button>`;
+			return `<button class="sm2-btn primary" data-sm-perm="create:Delivery Note" data-closure-action="delivery-note" data-so="${row.sales_order}">Create Delivery Note</button>`;
 		if (!row.sales_invoice)
-			return `<button class="sm2-btn primary" data-closure-action="sales-invoice" data-dn="${row.delivery_note}">Create Sales Invoice</button>`;
+			return `<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice" data-closure-action="sales-invoice" data-dn="${row.delivery_note}">Create Sales Invoice</button>`;
 		if (flt(row.pending_amount) > 0)
-			return `<button class="sm2-btn primary" data-closure-action="payment" data-si="${row.sales_invoice}" data-scrap="${row.name}">Record Payment</button>`;
+			return `<button class="sm2-btn primary" data-sm-perm="create:Payment Entry" data-closure-action="payment" data-si="${row.sales_invoice}" data-scrap="${row.name}">Record Payment</button>`;
 		return "";
 	}
 
@@ -2917,7 +2946,7 @@ class ScrapManagementUI {
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Quotations</h1>
 			<p class="sm2-sub">One row per linked Scrap — a Quotation can bundle several Scraps' items together; only one Quotation gets selected per Scrap.</p></div>
-			<button class="sm2-btn primary" id="sm2-new-quote-btn">+ New Quotation</button></div>
+			<button class="sm2-btn primary" id="sm2-new-quote-btn" data-sm-perm="create:Quotation">+ New Quotation</button></div>
 			<div class="sm2-card"><div class="sm2-tablewrap" id="sm2-quote-table"><div class="sm2-empty">Loading…</div></div></div>
 		`);
 		$el.find("#sm2-new-quote-btn").on("click", () => this.open_new_quotation());
@@ -2973,18 +3002,18 @@ class ScrapManagementUI {
 		// these are additive, not mutually exclusive with the Submit action.
 		const parts = [];
 		if (row.custom_approval_status === "Draft")
-			parts.push(`<button class="sm2-btn" data-quote-action="send-approval" data-name="${row.name}">Send For Approval</button>`);
+			parts.push(`<button class="sm2-btn" data-sm-perm="write:Quotation" data-quote-action="send-approval" data-name="${row.name}">Send For Approval</button>`);
 		else if (row.custom_approval_status === "Pending Approval")
 			parts.push(
-				`<button class="sm2-btn primary" data-quote-action="approve" data-name="${row.name}">Approve</button>`,
-				`<button class="sm2-btn" data-quote-action="reject" data-name="${row.name}">Reject</button>`
+				`<button class="sm2-btn primary" data-sm-perm="approve:Quotation" data-quote-action="approve" data-name="${row.name}">Approve</button>`,
+				`<button class="sm2-btn" data-sm-perm="approve:Quotation" data-quote-action="reject" data-name="${row.name}">Reject</button>`
 			);
 		// Approved-but-not-selected happens when a later Quotation for the same Scrap
 		// got approved instead (only one can be selected per Scrap) — Create Sales
 		// Order must only ever act on this Scrap's own selected Quotation, and only
 		// while this Scrap doesn't already have a Sales Order.
 		else if (row.custom_approval_status === "Approved" && row.selected && !row.scrap_sales_order)
-			parts.push(`<button class="sm2-btn primary" data-quote-action="create-so" data-name="${row.name}" data-scrap="${row.scrap}">Create Sales Order</button>`);
+			parts.push(`<button class="sm2-btn primary" data-sm-perm="create:Sales Order" data-quote-action="create-so" data-name="${row.name}" data-scrap="${row.scrap}">Create Sales Order</button>`);
 		parts.push(`<button class="sm2-btn" data-quote-action="print" data-name="${row.name}">Print</button>`);
 		if (row.docstatus !== 1) parts.push(`<button class="sm2-btn danger" data-quote-action="delete" data-name="${row.name}">Delete</button>`);
 		return parts.join(" ");

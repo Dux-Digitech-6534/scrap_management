@@ -39,12 +39,15 @@
    {"doctype": "Workflow Document State", "state": "Draft", "doc_status": "0", "allow_edit": "Sales User"},
    {"doctype": "Workflow Document State", "state": "Pending Approval", "doc_status": "0", "allow_edit": "Quotation Approver"},
    {"doctype": "Workflow Document State", "state": "Approved", "doc_status": "0", "allow_edit": "Quotation Approver"},
-   {"doctype": "Workflow Document State", "state": "Rejected", "doc_status": "0", "allow_edit": "Sales User"}
+   {"doctype": "Workflow Document State", "state": "Rejected", "doc_status": "0", "allow_edit": "Sales User"},
+   {"doctype": "Workflow Document State", "state": "Draft", "doc_status": "0", "allow_edit": "Scrap Quotations Creator"},
+   {"doctype": "Workflow Document State", "state": "Rejected", "doc_status": "0", "allow_edit": "Scrap Quotations Creator"}
   ],
   "transitions": [
    {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Sales User", "allow_self_approval": 1},
    {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Sales Manager", "allow_self_approval": 1},
    {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "System Manager", "allow_self_approval": 1},
+   {"doctype": "Workflow Transition", "state": "Draft", "action": "Send For Approval", "next_state": "Pending Approval", "allowed": "Scrap Quotations Creator", "allow_self_approval": 1},
    {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "Quotation Approver", "allow_self_approval": 1},
    {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "System Manager", "allow_self_approval": 1},
    {"doctype": "Workflow Transition", "state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "Quotation Approver", "allow_self_approval": 1},

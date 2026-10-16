@@ -26,5 +26,40 @@
   "role_name": "Security User",
   "desk_access": 1,
   "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Quotations Creator",
+  "role_name": "Scrap Quotations Creator",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Sale Order Creator",
+  "role_name": "Scrap Sale Order Creator",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Delivery Note",
+  "role_name": "Scrap Delivery Note",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Sales invoice",
+  "role_name": "Scrap Sales invoice",
+  "desk_access": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "Scrap Payment Entry",
+  "role_name": "Scrap Payment Entry",
+  "desk_access": 1,
+  "disabled": 0
  }
 ]
