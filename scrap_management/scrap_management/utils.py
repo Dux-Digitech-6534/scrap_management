@@ -109,3 +109,63 @@ def get_scrap_for_reference(doctype, name, fieldname="custom_scrap"):
 	if not name:
 		return None
 	return frappe.db.get_value(doctype, name, fieldname)
+
+
+ATTACH_FIELDTYPES = ("Attach", "Attach Image")
+
+
+def link_attachments(doc, method=None):
+	"""Files picked in the Scrap Management screen are uploaded before the document
+	exists, so they land as private Files attached to nothing — and an unattached
+	private file can only be opened by whoever uploaded it. Attach every private
+	file this document (or one of its child rows) points at to the document itself,
+	so anyone allowed to read the document can open its attachments."""
+	for file_url in _private_attachment_urls(doc):
+		try:
+			_attach_file(file_url, doc.doctype, doc.name)
+		except Exception:
+			# Never block saving the document over an attachment link.
+			frappe.log_error(title=f"Scrap Management: could not attach {file_url} to {doc.doctype} {doc.name}")
+
+
+def _private_attachment_urls(doc):
+	urls = set()
+	for d in [doc, *doc.get_all_children()]:
+		for df in frappe.get_meta(d.doctype).fields:
+			value = d.get(df.fieldname) if df.fieldtype in ATTACH_FIELDTYPES else None
+			if value and value.startswith("/private/files/"):
+				urls.add(value)
+	return urls
+
+
+def _attach_file(file_url, doctype, name):
+	files = frappe.get_all(
+		"File",
+		filters={"file_url": file_url, "is_folder": 0},
+		fields=["name", "attached_to_doctype", "attached_to_name"],
+		order_by="creation asc",
+	)
+	if not files or any(f.attached_to_doctype == doctype and f.attached_to_name == name for f in files):
+		return
+
+	unattached = next((f for f in files if not f.attached_to_doctype), None)
+	if unattached:
+		frappe.db.set_value(
+			"File", unattached.name, {"attached_to_doctype": doctype, "attached_to_name": name}, update_modified=False
+		)
+		return
+
+	# Already attached to another document (e.g. a Quotation's attachment carried
+	# onto its Sales Order) — give this document its own File record for the same file.
+	src = frappe.get_doc("File", files[0].name)
+	frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_url": file_url,
+			"file_name": src.file_name,
+			"is_private": 1,
+			"folder": src.folder,
+			"attached_to_doctype": doctype,
+			"attached_to_name": name,
+		}
+	).insert(ignore_permissions=True)

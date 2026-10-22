@@ -83,23 +83,40 @@ fixtures = [
 # Document Events
 # ---------------
 doc_events = {
+	"Scrap": {
+		"on_update": "scrap_management.scrap_management.utils.link_attachments",
+	},
 	"Stock Entry": {
 		"on_submit": "scrap_management.scrap_management.doc_events.stock_entry.on_submit",
 		"on_cancel": "scrap_management.scrap_management.doc_events.stock_entry.on_cancel",
 	},
 	"Quotation": {
 		"validate": "scrap_management.scrap_management.doc_events.quotation.validate",
-		"on_update": "scrap_management.scrap_management.doc_events.quotation.on_update",
+		"on_update": [
+			"scrap_management.scrap_management.doc_events.quotation.on_update",
+			"scrap_management.scrap_management.utils.link_attachments",
+		],
+		"on_update_after_submit": "scrap_management.scrap_management.utils.link_attachments",
 		"on_cancel": "scrap_management.scrap_management.doc_events.quotation.on_cancel",
 	},
 	"Sales Order": {
 		"validate": "scrap_management.scrap_management.doc_events.sales_order.validate",
-		"on_submit": "scrap_management.scrap_management.doc_events.sales_order.on_submit",
+		"on_update": "scrap_management.scrap_management.utils.link_attachments",
+		"on_submit": [
+			"scrap_management.scrap_management.doc_events.sales_order.on_submit",
+			"scrap_management.scrap_management.utils.link_attachments",
+		],
+		"on_update_after_submit": "scrap_management.scrap_management.utils.link_attachments",
 		"on_cancel": "scrap_management.scrap_management.doc_events.sales_order.on_cancel",
 	},
 	"Delivery Note": {
 		"validate": "scrap_management.scrap_management.doc_events.delivery_note.validate",
-		"on_submit": "scrap_management.scrap_management.doc_events.delivery_note.on_submit",
+		"on_update": "scrap_management.scrap_management.utils.link_attachments",
+		"on_submit": [
+			"scrap_management.scrap_management.doc_events.delivery_note.on_submit",
+			"scrap_management.scrap_management.utils.link_attachments",
+		],
+		"on_update_after_submit": "scrap_management.scrap_management.utils.link_attachments",
 		"on_cancel": "scrap_management.scrap_management.doc_events.delivery_note.on_cancel",
 	},
 	"Sales Invoice": {
