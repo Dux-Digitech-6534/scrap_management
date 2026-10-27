@@ -799,6 +799,12 @@ class ScrapManagementUI {
 					default: isEdit ? existingDoc.scrap_warehouse : null,
 					get_query: () => ({ filters: { company: fg.get_value("company"), is_group: 0 } }),
 				},
+				{
+					fieldtype: "Data",
+					fieldname: "dump_location",
+					label: "Dump Location",
+					default: isEdit ? existingDoc.dump_location : null,
+				},
 				{ fieldtype: "Column Break" },
 				{
 					fieldtype: "Link",
@@ -1160,6 +1166,7 @@ class ScrapManagementUI {
 								title: "Material & Inventory",
 								html: `<div class="sm2-field-grid">
 									${field("Warehouse", frappe.utils.escape_html(doc.scrap_warehouse))}
+									${field("Dump Location", frappe.utils.escape_html(doc.dump_location || "—"))}
 									${field("Stock Entry", doc.stock_entry ? sm_entity_link("Stock Entry", doc.stock_entry) : "—")}
 								</div>
 								<div class="sm2-tablewrap">${itemsTable}</div>`,
