@@ -28,6 +28,7 @@ def get_columns():
 		{"label": _("Approval Status"), "fieldname": "approval_status", "fieldtype": "Data", "width": 110},
 		{"label": _("Stock Entry"), "fieldname": "stock_entry", "fieldtype": "Link", "options": "Stock Entry", "width": 110},
 		{"label": _("Scrap Warehouse"), "fieldname": "scrap_warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 130},
+		{"label": _("Dump Location"), "fieldname": "dump_location", "fieldtype": "Data", "width": 130},
 		{"label": _("Received Qty"), "fieldname": "received_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Available Qty"), "fieldname": "available_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("No. of Quotations"), "fieldname": "quotation_count", "fieldtype": "Int", "width": 110},
@@ -77,7 +78,7 @@ def get_data(filters):
 	rows = frappe.db.sql(
 		f"""
 		select s.name, s.scrap_date, s.campus, s.department, si.scrap_category, si.item, si.item_name,
-			si.qty, si.uom, s.reason_for_scrap, s.remarks, s.status, s.stock_entry, s.scrap_warehouse,
+			si.qty, si.uom, s.reason_for_scrap, s.remarks, s.status, s.stock_entry, s.scrap_warehouse, s.dump_location,
 			si.dispatched_qty, si.available_qty, s.selected_customer, s.selected_quotation,
 			s.approved_sale_value, s.sales_order, s.delivery_note, s.gate_pass_no,
 			s.sales_invoice, s.invoice_amount, s.pending_amount, s.payment_status, s.closed_on

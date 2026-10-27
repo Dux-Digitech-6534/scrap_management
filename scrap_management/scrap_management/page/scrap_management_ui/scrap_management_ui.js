@@ -803,6 +803,7 @@ class ScrapManagementUI {
 					fieldtype: "Data",
 					fieldname: "dump_location",
 					label: "Dump Location",
+					reqd: 1,
 					default: isEdit ? existingDoc.dump_location : null,
 				},
 				{ fieldtype: "Column Break" },

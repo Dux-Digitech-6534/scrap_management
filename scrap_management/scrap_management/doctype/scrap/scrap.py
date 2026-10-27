@@ -27,6 +27,13 @@ class Scrap(Document):
 			if flt(row.qty) <= 0:
 				frappe.throw(_("Row {0}: Quantity must be greater than zero.").format(row.idx))
 
+		# Required for every Scrap still with its creator. Scraps already sent on
+		# before the field existed must stay approvable without it.
+		if (self.is_new() or self.approval_state in ("Draft", "Returned for Correction")) and not (
+			self.dump_location or ""
+		).strip():
+			frappe.throw(_("Dump Location is mandatory."))
+
 		self._guard_locked_fields()
 
 	def before_save(self):
