@@ -640,6 +640,7 @@ class ScrapManagementUI {
 				<div class="sm2-head"><h3>Scrap List</h3>
 					<div class="sm2-toolbar">
 						<input class="sm2-input" id="sm2-scrap-search" placeholder="Search item" style="width:200px">
+						<select class="sm2-select" id="sm2-scrap-company"><option value="">All Companies</option></select>
 						<select class="sm2-select" id="sm2-scrap-status">
 							<option value="">All Status</option>
 							<option>Draft</option><option>Pending Approval</option><option>Approved</option>
@@ -653,6 +654,11 @@ class ScrapManagementUI {
 		$el.find("#sm2-new-scrap-btn").on("click", () => this.open_new_scrap());
 		$el.find("#sm2-scrap-search").on("input", frappe.utils.debounce(() => this.load_scrap_list(), 300));
 		$el.find("#sm2-scrap-status").on("change", () => this.load_scrap_list());
+		$el.find("#sm2-scrap-company").on("change", () => this.load_scrap_list());
+		frappe.db.get_list("Company", { fields: ["name"], order_by: "name asc", limit: 0 }).then((companies) => {
+			const $sel = $el.find("#sm2-scrap-company");
+			(companies || []).forEach((c) => $sel.append($("<option>").val(c.name).text(c.name)));
+		});
 		this.load_scrap_list();
 	}
 
@@ -660,8 +666,10 @@ class ScrapManagementUI {
 		const $el = this.page.main.find("#sm2-scrap");
 		const search = $el.find("#sm2-scrap-search").val();
 		const status = $el.find("#sm2-scrap-status").val();
+		const company = $el.find("#sm2-scrap-company").val();
 		const filters = {};
 		if (status) filters.status = status;
+		if (company) filters.company = company;
 
 		(search
 			? frappe.call({ method: "scrap_management.api.search_scrap_by_item", args: { search_text: search } }).then((r) => {
@@ -673,7 +681,7 @@ class ScrapManagementUI {
 				method: "frappe.client.get_list",
 				args: {
 					doctype: "Scrap",
-					fields: ["name", "scrap_date", "department", "status"],
+					fields: ["name", "scrap_date", "company", "department", "status"],
 					filters,
 					order_by: "creation desc",
 					limit_page_length: 100,
@@ -693,15 +701,15 @@ class ScrapManagementUI {
 					: Promise.resolve()
 				).then(() => {
 					$el.find("#sm2-scrap-table").html(`
-						<table class="sm2-table"><thead><tr><th>Scrap ID</th><th>Date</th><th>Items</th><th>Department</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead>
+						<table class="sm2-table"><thead><tr><th>Scrap ID</th><th>Date</th><th>Items</th><th>Company</th><th>Department</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead>
 						<tbody>${rows
 							.map(
 								(x) => `<tr><td>${sm_scrap_link(x.name)}</td><td>${x.scrap_date || ""}</td>
-							<td>${frappe.utils.escape_html(x.items.map((i) => i.item_name || i.item).join(", ") || "—")}</td><td>${frappe.utils.escape_html(x.department || "")}</td>
+							<td>${frappe.utils.escape_html(x.items.map((i) => i.item_name || i.item).join(", ") || "—")}</td><td>${frappe.utils.escape_html(x.company || "")}</td><td>${frappe.utils.escape_html(x.department || "")}</td>
 							<td class="sm2-mono">${x.items.map((i) => `${i.qty} ${i.uom || ""}`).join(", ")}</td><td>${sm_pill(x.status)}</td>
 							<td><button class="sm2-btn" data-print-scrap="${x.name}">Print</button> <button class="sm2-btn danger" data-del-scrap="${x.name}">Delete</button></td></tr>`
 							)
-							.join("") || '<tr><td colspan="7" class="sm2-empty">No records found.</td></tr>'}</tbody></table>
+							.join("") || '<tr><td colspan="8" class="sm2-empty">No records found.</td></tr>'}</tbody></table>
 					`);
 					$el.find("[data-print-scrap]").on("click", (e) => sm_print("Scrap", $(e.currentTarget).data("print-scrap"), "Scrap Print"));
 					$el.find("[data-del-scrap]").on("click", (e) => {
