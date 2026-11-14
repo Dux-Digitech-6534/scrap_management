@@ -32,9 +32,10 @@ def get_dashboard_data():
 		limit_page_length=8,
 	)
 	for row in recent:
-		items = frappe.get_all("Scrap Item", filters={"parent": row.name}, fields=["item_name", "item", "qty"])
+		items = frappe.get_all("Scrap Item", filters={"parent": row.name}, fields=["item_name", "item", "qty", "available_qty"])
 		row["item_summary"] = ", ".join(i.item_name or i.item for i in items) or "—"
 		row["item_count"] = len(items)
+		row["available_qty"] = sum(flt(i.available_qty) for i in items)
 		row["quotation_count"] = frappe.db.sql(
 			"""select count(distinct q.name) from `tabQuotation` q
 			inner join `tabScrap Reference` sr on sr.parent = q.name
@@ -132,74 +133,76 @@ def get_quotations_list():
 
 @frappe.whitelist()
 def get_scrap_stock_balance(filters=None):
-	"""The real, authoritative Stock Ledger balance (ERPNext's own Stock Balance
-	report), scoped to only the items this app has actually received as scrap
-	(via a Scrap Item row on some Scrap) and the warehouses scrap has ever been
-	received into — this is a Scrap-only view, not the warehouse's full
-	inventory. An explicit Company/Warehouse filter (mirroring the real report's
-	own filter bar) can widen the warehouse scope, but the item scope always
-	stays limited to actual scrap items."""
+	"""Scrap stock as kept by Scrap Management itself (approved Scrap minus Scrap
+	Dispatches), grouped by Company / Warehouse / Item. ERPNext's Stock Ledger is not
+	used — scrap never posts to it, whether the item is a stock item or not."""
+	if not frappe.has_permission("Scrap", "read"):
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else (filters or {})
 
-	scrap_wh_rows = frappe.get_all("Scrap", filters={"scrap_warehouse": ["is", "set"]}, fields=["company", "scrap_warehouse"])
-	if not scrap_wh_rows:
-		return {"columns": [], "data": []}
+	conditions = ["s.approval_state = 'Approved'"]
+	values = {}
+	for key, column in (("company", "s.company"), ("warehouse", "s.scrap_warehouse"), ("item_code", "si.item")):
+		if filters.get(key):
+			conditions.append(f"{column} = %({key})s")
+			values[key] = filters[key]
+	if filters.get("from_date"):
+		conditions.append("date(s.approval_date) >= %(from_date)s")
+		values["from_date"] = filters["from_date"]
+	if filters.get("to_date"):
+		conditions.append("date(s.approval_date) <= %(to_date)s")
+		values["to_date"] = filters["to_date"]
 
-	scrap_items = list(set(frappe.get_all("Scrap Item", pluck="item")))
-	if not scrap_items:
-		return {"columns": [], "data": []}
+	data = frappe.db.sql(
+		f"""
+		select s.company, s.scrap_warehouse as warehouse, si.item as item_code, max(si.item_name) as item_name,
+			max(si.uom) as uom, sum(si.qty) as received_qty, sum(si.dispatched_qty) as dispatched_qty,
+			sum(si.available_qty) as available_qty, count(distinct s.name) as scrap_count
+		from `tabScrap` s
+		inner join `tabScrap Item` si on si.parent = s.name
+		where {" and ".join(conditions)}
+		group by s.company, s.scrap_warehouse, si.item
+		order by s.company, s.scrap_warehouse, si.item
+		""",
+		values,
+		as_dict=True,
+	)
+	if not frappe.utils.cint(filters.get("include_zero_stock_items")):
+		data = [row for row in data if flt(row.available_qty) > 0]
 
-	by_company = {}
-	for row in scrap_wh_rows:
-		by_company.setdefault(row.company, set()).add(row.scrap_warehouse)
-
-	company = filters.get("company") or scrap_wh_rows[0].company
-	company_warehouses = sorted(by_company.get(company, []))
-
-	if filters.get("warehouse"):
-		warehouse = [filters["warehouse"]] if isinstance(filters["warehouse"], str) else filters["warehouse"]
-	elif company_warehouses:
-		warehouse = company_warehouses
-	else:
-		return {"columns": [], "data": []}
-
-	if filters.get("item_code"):
-		item_code = [filters["item_code"]] if isinstance(filters["item_code"], str) else filters["item_code"]
-	else:
-		item_code = scrap_items
-
-	from erpnext.stock.report.stock_balance.stock_balance import execute
-
-	# The report reads filters via attribute access (self.filters.company) — it
-	# expects a frappe._dict, not a plain dict.
-	report_filters = {
-		"company": company,
-		"from_date": filters.get("from_date") or "2000-01-01",
-		"to_date": filters.get("to_date") or frappe.utils.today(),
-		"warehouse": warehouse,
-		"item_code": item_code,
-		"include_zero_stock_items": frappe.utils.cint(filters.get("include_zero_stock_items")),
-	}
-
-	if _erpnext_major_version() >= 15:
-		columns, data = execute(frappe._dict(report_filters))
-		return {"columns": columns, "data": data}
-
-	# ERPNext v14: one warehouse per run, no item list — run per warehouse and keep
-	# only the scrap items.
-	wanted_items = set(item_code)
-	columns, data = [], []
-	for wh in warehouse:
-		wh_filters = frappe._dict(report_filters, warehouse=wh, item_code=item_code[0] if len(item_code) == 1 else None)
-		columns, wh_data = execute(wh_filters)
-		data.extend(row for row in wh_data if row.get("item_code") in wanted_items)
+	columns = [
+		{"label": "Company", "fieldname": "company", "fieldtype": "Link", "options": "Company"},
+		{"label": "Warehouse", "fieldname": "warehouse", "fieldtype": "Link", "options": "Warehouse"},
+		{"label": "Item", "fieldname": "item_code", "fieldtype": "Link", "options": "Item"},
+		{"label": "Item Name", "fieldname": "item_name", "fieldtype": "Data"},
+		{"label": "UOM", "fieldname": "uom", "fieldtype": "Data"},
+		{"label": "Scrap Entries", "fieldname": "scrap_count", "fieldtype": "Int"},
+		{"label": "Received Qty", "fieldname": "received_qty", "fieldtype": "Float"},
+		{"label": "Dispatched Qty", "fieldname": "dispatched_qty", "fieldtype": "Float"},
+		{"label": "Available Qty", "fieldname": "available_qty", "fieldtype": "Float"},
+	]
 	return {"columns": columns, "data": data}
 
 
-def _erpnext_major_version():
-	import erpnext
-
-	return frappe.utils.cint(str(erpnext.__version__).split(".")[0])
+@frappe.whitelist()
+def get_unbilled_scrap_dispatches():
+	"""Submitted Scrap Dispatches that no live Sales Invoice has billed yet."""
+	if not frappe.has_permission("Scrap Dispatch", "read"):
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	return frappe.db.sql(
+		"""
+		select sd.name, sd.scrap, sd.customer, sd.sales_order, sd.posting_date
+		from `tabScrap Dispatch` sd
+		where sd.docstatus = 1
+			and not exists (
+				select 1 from `tabSales Invoice` si
+				where si.custom_scrap_dispatch = sd.name and si.docstatus != 2
+			)
+		order by sd.creation desc
+		limit 100
+		""",
+		as_dict=True,
+	)
 
 
 @frappe.whitelist()

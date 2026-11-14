@@ -12,19 +12,12 @@ def recalculate_scrap(scrap_name):
 	doc = frappe.get_doc("Scrap", scrap_name)
 	updates = {}
 
-	is_received = bool(doc.stock_entry and frappe.db.get_value("Stock Entry", doc.stock_entry, "docstatus") == 1)
+	is_received = is_scrap_received(doc)
+	dispatched_by_item = get_dispatched_qty_by_item(scrap_name)
 	total_dispatched = 0
 	for row in doc.items:
 		received_qty = flt(row.qty) if is_received else 0
-		dispatched_qty = flt(
-			frappe.db.sql(
-				"""select sum(dni.qty) from `tabDelivery Note Item` dni
-				inner join `tabDelivery Note` dn on dn.name = dni.parent
-				where dn.custom_scrap=%s and dn.docstatus=1 and dni.item_code=%s""",
-				(scrap_name, row.item),
-			)[0][0]
-			or 0
-		)
+		dispatched_qty = flt(dispatched_by_item.get(row.item))
 		available_qty = received_qty - dispatched_qty
 		frappe.db.set_value("Scrap Item", row.name, {"dispatched_qty": dispatched_qty, "available_qty": available_qty}, update_modified=False)
 		total_dispatched += dispatched_qty
@@ -64,7 +57,11 @@ def recalculate_scrap(scrap_name):
 	else:
 		updates["payment_status"] = updates.get("payment_status") or "Not Invoiced"
 
+	if doc.sales_order:
+		updates["delivery_status"] = _dispatch_status(doc, total_dispatched)
+
 	doc.db_set(updates, update_modified=False)
+	_close_sales_order_if_done(doc)
 
 	# Forward-only status cascade. Only runs once the Scrap Approval Workflow has
 	# actually reached "Approved" — approval_state (not status) is the field the
@@ -85,7 +82,7 @@ def _compute_forward_status(doc, updates, total_dispatched):
 		return "Closed"
 	if doc.sales_invoice:
 		return "Invoiced" if updates.get("payment_status") in ("Pending", "Partially Paid") else "Payment Pending"
-	if doc.delivery_note or total_dispatched > 0:
+	if doc.get("scrap_dispatch") or doc.delivery_note or total_dispatched > 0:
 		return "Dispatched"
 	if doc.sales_order:
 		return "Sales Order Created"
@@ -99,9 +96,70 @@ def _compute_forward_status(doc, updates, total_dispatched):
 	)
 	if has_open_quotation:
 		return "Quotation in Process"
-	if doc.stock_entry:
-		return "Available for Sale"
-	return doc.status
+	# Approval itself puts the scrap into Scrap Management's own stock.
+	return "Available for Sale"
+
+
+def is_scrap_received(doc):
+	"""Scrap stock lives only inside this app: an approved Scrap is in stock from the
+	moment it is approved. ERPNext's Stock Ledger is never touched."""
+	return doc.approval_state == "Approved"
+
+
+def get_dispatched_qty_by_item(scrap_name, exclude_dispatch=None):
+	"""Qty already dispatched per item: submitted Scrap Dispatches plus any Delivery
+	Notes created before Scrap Dispatch existed."""
+	dispatched = {}
+	rows = frappe.db.sql(
+		"""select sdi.item, sum(sdi.qty) from `tabScrap Dispatch Item` sdi
+		inner join `tabScrap Dispatch` sd on sd.name = sdi.parent
+		where sd.scrap=%s and sd.docstatus=1 and sd.name != %s
+		group by sdi.item""",
+		(scrap_name, exclude_dispatch or ""),
+	)
+	rows += frappe.db.sql(
+		"""select dni.item_code, sum(dni.qty) from `tabDelivery Note Item` dni
+		inner join `tabDelivery Note` dn on dn.name = dni.parent
+		where dn.custom_scrap=%s and dn.docstatus=1
+		group by dni.item_code""",
+		scrap_name,
+	)
+	for item, qty in rows:
+		dispatched[item] = flt(dispatched.get(item)) + flt(qty)
+	return dispatched
+
+
+def _dispatch_status(doc, total_dispatched):
+	total_qty = sum(flt(row.qty) for row in doc.items)
+	if total_dispatched <= 0:
+		return "Pending"
+	return "Fully Delivered" if total_dispatched >= total_qty else "Partially Delivered"
+
+
+def _close_sales_order_if_done(doc):
+	"""ERPNext reserves stock for every open Sales Order line. Scrap never moves
+	through ERPNext stock, so once the scrap Sales Order is fully dispatched (inside
+	this app) and fully billed, close it to release that reservation."""
+	if not doc.sales_order:
+		return
+	so = frappe.db.get_value("Sales Order", doc.sales_order, ["docstatus", "status", "per_billed", "total_qty"], as_dict=True)
+	if not so or so.docstatus != 1 or so.status in ("Closed", "Completed") or flt(so.per_billed) < 100:
+		return
+	dispatched_against_so = flt(
+		frappe.db.sql(
+			"""select sum(sdi.qty) from `tabScrap Dispatch Item` sdi
+			inner join `tabScrap Dispatch` sd on sd.name = sdi.parent
+			where sd.sales_order=%s and sd.docstatus=1""",
+			doc.sales_order,
+		)[0][0]
+		or 0
+	)
+	if dispatched_against_so < flt(so.total_qty):
+		return
+	try:
+		frappe.get_doc("Sales Order", doc.sales_order).update_status("Closed")
+	except Exception:
+		frappe.log_error(title=f"Scrap Management: could not close Sales Order {doc.sales_order}")
 
 
 def get_scrap_for_reference(doctype, name, fieldname="custom_scrap"):

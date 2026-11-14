@@ -14,6 +14,15 @@ def validate(doc, method=None):
 	if not doc.get("custom_scrap"):
 		return
 
+	# A Delivery Note always posts to ERPNext's Stock Ledger; scrap stock is kept only
+	# inside Scrap Management, so new scrap dispatches must use Scrap Dispatch.
+	if doc.docstatus == 0:
+		frappe.throw(
+			_("Scrap {0} is dispatched with a Scrap Dispatch, not a Delivery Note (Scrap stock is not kept in ERPNext).").format(
+				doc.custom_scrap
+			)
+		)
+
 	scrap = frappe.db.get_value("Scrap", doc.custom_scrap, ["stock_entry"], as_dict=True)
 	if not scrap:
 		frappe.throw(_("Linked Scrap {0} does not exist.").format(doc.custom_scrap))

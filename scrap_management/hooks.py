@@ -61,6 +61,7 @@ fixtures = [
 					"Delivery Note-custom_security_exit_datetime",
 					"Delivery Note-custom_security_remarks",
 					"Sales Invoice-custom_scrap",
+					"Sales Invoice-custom_scrap_dispatch",
 					"Payment Entry-custom_scrap",
 				],
 			]
@@ -85,6 +86,11 @@ fixtures = [
 doc_events = {
 	"Scrap": {
 		"on_update": "scrap_management.scrap_management.utils.link_attachments",
+	},
+	"Scrap Dispatch": {
+		"on_update": "scrap_management.scrap_management.utils.link_attachments",
+		"on_submit": "scrap_management.scrap_management.utils.link_attachments",
+		"on_update_after_submit": "scrap_management.scrap_management.utils.link_attachments",
 	},
 	"Stock Entry": {
 		"on_submit": "scrap_management.scrap_management.doc_events.stock_entry.on_submit",
@@ -122,6 +128,7 @@ doc_events = {
 	"Sales Invoice": {
 		"validate": "scrap_management.scrap_management.doc_events.sales_invoice.validate",
 		"on_submit": "scrap_management.scrap_management.doc_events.sales_invoice.on_submit",
+		"before_cancel": "scrap_management.scrap_management.doc_events.sales_invoice.before_cancel",
 		"on_cancel": "scrap_management.scrap_management.doc_events.sales_invoice.on_cancel",
 	},
 	"Payment Entry": {

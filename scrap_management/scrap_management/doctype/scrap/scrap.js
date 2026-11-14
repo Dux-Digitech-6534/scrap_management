@@ -125,15 +125,15 @@ function set_custom_buttons(frm) {
 		);
 	}
 
-	if (frm.doc.sales_order && !frm.doc.delivery_note) {
+	if (frm.doc.sales_order && (frm.doc.items || []).some((r) => flt(r.available_qty) > 0)) {
 		frm.add_custom_button(
-			__("Delivery Note"),
+			__("Scrap Dispatch"),
 			() => {
 				frappe.call({
-					method: "scrap_management.scrap_management.doctype.scrap.scrap.make_delivery_note",
+					method: "scrap_management.scrap_management.doctype.scrap.scrap.make_scrap_dispatch",
 					args: { sales_order_name: frm.doc.sales_order },
 					callback(r) {
-						if (r.message) frappe.model.sync(r.message), frappe.set_route("Form", "Delivery Note", r.message.name);
+						if (r.message) frappe.model.sync(r.message), frappe.set_route("Form", "Scrap Dispatch", r.message.name);
 					},
 				});
 			},
@@ -141,13 +141,13 @@ function set_custom_buttons(frm) {
 		);
 	}
 
-	if (frm.doc.delivery_note && !frm.doc.sales_invoice) {
+	if ((frm.doc.scrap_dispatch || frm.doc.delivery_note) && !frm.doc.sales_invoice) {
 		frm.add_custom_button(
 			__("Sales Invoice"),
 			() => {
 				frappe.call({
 					method: "scrap_management.scrap_management.doctype.scrap.scrap.make_sales_invoice",
-					args: { delivery_note_name: frm.doc.delivery_note },
+					args: frm.doc.scrap_dispatch ? { scrap_dispatch: frm.doc.scrap_dispatch } : { delivery_note_name: frm.doc.delivery_note },
 					callback(r) {
 						if (r.message) frappe.model.sync(r.message), frappe.set_route("Form", "Sales Invoice", r.message.name);
 					},
@@ -157,7 +157,7 @@ function set_custom_buttons(frm) {
 		);
 	}
 
-	["stock_entry", "sales_order", "delivery_note", "sales_invoice", "selected_quotation"].forEach((f) => {
+	["stock_entry", "sales_order", "scrap_dispatch", "delivery_note", "sales_invoice", "selected_quotation"].forEach((f) => {
 		if (frm.doc[f]) {
 			frm.get_field(f) && frm.get_field(f).$wrapper.find("a").attr("target", "_blank");
 		}

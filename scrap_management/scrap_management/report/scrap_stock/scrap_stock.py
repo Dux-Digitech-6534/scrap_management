@@ -18,6 +18,7 @@ def get_columns():
 		{"label": _("Scrap"), "fieldname": "name", "fieldtype": "Link", "options": "Scrap", "width": 110},
 		{"label": _("Item"), "fieldname": "item", "fieldtype": "Link", "options": "Item", "width": 120},
 		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 150},
+		{"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 160},
 		{"label": _("Campus"), "fieldname": "campus", "fieldtype": "Data", "width": 110},
 		{"label": _("Department"), "fieldname": "department", "fieldtype": "Link", "options": "Department", "width": 130},
 		{"label": _("Warehouse"), "fieldname": "scrap_warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 140},
@@ -33,9 +34,13 @@ def get_columns():
 def get_data(filters):
 	# One row per Scrap Item — a multi-item Scrap can have some items available and
 	# others fully dispatched, so this can't be reported on at the Scrap level alone.
-	conditions = ["s.stock_entry is not null", "s.stock_entry != ''"]
+	# Scrap stock is kept inside Scrap Management: an approved Scrap is in stock.
+	conditions = ["s.approval_state = 'Approved'"]
 	values = {}
 
+	if filters.get("company"):
+		conditions.append("s.company = %(company)s")
+		values["company"] = filters["company"]
 	if filters.get("campus"):
 		conditions.append("s.campus = %(campus)s")
 		values["campus"] = filters["campus"]
@@ -55,13 +60,13 @@ def get_data(filters):
 
 	rows = frappe.db.sql(
 		f"""
-		select s.name, si.item, si.item_name, s.campus, s.department, s.scrap_warehouse,
+		select s.name, si.item, si.item_name, s.company, s.campus, s.department, s.scrap_warehouse,
 			si.qty as received_qty, si.dispatched_qty, si.available_qty, si.uom,
-			s.stock_entry_date
+			coalesce(s.stock_entry_date, s.approval_date) as stock_entry_date
 		from `tabScrap` s
 		inner join `tabScrap Item` si on si.parent = s.name
 		where {" and ".join(conditions)}
-		order by s.stock_entry_date desc
+		order by coalesce(s.stock_entry_date, s.approval_date) desc
 		""",
 		values,
 		as_dict=True,

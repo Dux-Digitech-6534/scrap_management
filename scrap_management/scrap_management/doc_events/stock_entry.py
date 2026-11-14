@@ -21,5 +21,8 @@ def on_cancel(doc, method=None):
 			},
 			update_modified=False,
 		)
-		scrap.add_comment("Info", frappe.bold(f"Stock Entry {doc.name} was cancelled — Scrap reverted to Approved / not received."))
+		scrap.add_comment(
+			"Info",
+			frappe.bold(f"Stock Entry {doc.name} was cancelled — ERPNext stock reversed; Scrap stock is kept in Scrap Management."),
+		)
 	recalculate_scrap(doc.custom_scrap)

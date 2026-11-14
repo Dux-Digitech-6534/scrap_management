@@ -51,15 +51,17 @@ class Scrap(Document):
 			# aren't declared workflow states) — approval_state is the only field the
 			# Workflow itself may drive.
 			self.status = "Approved"
-			if not self.stock_entry:
-				self.flags.create_stock_entry_on_update = True
+			self.flags.received_on_approval = True
 		else:
 			self.status = self.approval_state
 
 	def on_update(self):
-		if self.flags.create_stock_entry_on_update:
-			self.flags.create_stock_entry_on_update = False
-			create_stock_entry_for_scrap(self.name)
+		if self.flags.received_on_approval:
+			# Approval puts the scrap into Scrap Management's own stock — no ERPNext
+			# Stock Entry, so stock and non-stock (fixed asset) items behave the same.
+			self.flags.received_on_approval = False
+			self.add_comment("Info", frappe.bold("Scrap approved — quantity added to Scrap stock."))
+			recalculate_scrap(self.name)
 
 	def _guard_locked_fields(self):
 		"""Once a Scrap has left the editable pre-approval states, its material/financial
@@ -76,45 +78,6 @@ class Scrap(Document):
 		for fieldname in locked_fields:
 			if self.get(fieldname) != previous.get(fieldname):
 				frappe.throw(_("Cannot change {0} after Scrap has been approved.").format(frappe.bold(fieldname)))
-
-
-def create_stock_entry_for_scrap(scrap_name):
-	"""Called once, right after a Scrap moves into Approved. Creates and submits the
-	Material Receipt Stock Entry that brings the scrap into the Scrap Warehouse.
-	Guarded against duplicate creation by the caller checking `not self.stock_entry`
-	before setting the flag, and again here as a second safety net."""
-	doc = frappe.get_doc("Scrap", scrap_name)
-	if doc.stock_entry:
-		return doc.stock_entry
-
-	se = frappe.new_doc("Stock Entry")
-	se.stock_entry_type = "Material Receipt"
-	se.company = doc.company
-	se.custom_scrap = doc.name
-	for row in doc.items:
-		se.append(
-			"items",
-			{
-				"item_code": row.item,
-				"qty": row.qty,
-				"uom": row.uom,
-				"t_warehouse": doc.scrap_warehouse,
-			},
-		)
-	se.insert(ignore_permissions=True)
-	se.submit()
-
-	doc.db_set(
-		{
-			"stock_entry": se.name,
-			"stock_entry_date": now_datetime(),
-			"status": "Available for Sale",
-		},
-		update_modified=False,
-	)
-	doc.add_comment("Info", frappe.bold(f"Stock Entry {se.name} created and submitted on approval."))
-	recalculate_scrap(scrap_name)
-	return se.name
 
 
 @frappe.whitelist()
@@ -182,26 +145,87 @@ def make_sales_order(scrap_name):
 
 
 @frappe.whitelist()
-def make_delivery_note(sales_order_name):
-	from erpnext.selling.doctype.sales_order.sales_order import make_delivery_note as so_to_dn
+def make_scrap_dispatch(sales_order_name):
+	"""Unsaved Scrap Dispatch for whatever is still left to dispatch on this scrap
+	Sales Order, capped at the Scrap stock still available per item."""
+	so = frappe.get_doc("Sales Order", sales_order_name)
+	if not so.get("custom_scrap"):
+		frappe.throw(_("Sales Order {0} is not linked to a Scrap.").format(sales_order_name))
+	if so.docstatus != 1:
+		frappe.throw(_("Sales Order {0} must be submitted before dispatch.").format(sales_order_name))
 
-	scrap_name = frappe.db.get_value("Sales Order", sales_order_name, "custom_scrap")
-	dn = so_to_dn(sales_order_name)
-	if scrap_name:
-		dn.custom_scrap = scrap_name
-		scrap_warehouse = frappe.db.get_value("Scrap", scrap_name, "scrap_warehouse")
-		if scrap_warehouse:
-			for row in dn.items:
-				row.warehouse = scrap_warehouse
-	return dn
+	scrap = frappe.get_doc("Scrap", so.custom_scrap)
+	recalculate_scrap(scrap.name)
+	scrap.reload()
+	available = {}
+	for row in scrap.items:
+		available[row.item] = flt(available.get(row.item)) + flt(row.available_qty)
+
+	dispatched_by_so_row = dict(
+		frappe.db.sql(
+			"""select sdi.sales_order_item, sum(sdi.qty) from `tabScrap Dispatch Item` sdi
+			inner join `tabScrap Dispatch` sd on sd.name = sdi.parent
+			where sd.sales_order=%s and sd.docstatus=1 group by sdi.sales_order_item""",
+			sales_order_name,
+		)
+	)
+
+	dispatch = frappe.new_doc("Scrap Dispatch")
+	dispatch.scrap = scrap.name
+	dispatch.company = scrap.company
+	dispatch.scrap_warehouse = scrap.scrap_warehouse
+	dispatch.sales_order = so.name
+	dispatch.customer = so.customer
+	for row in so.items:
+		pending = flt(row.qty) - flt(dispatched_by_so_row.get(row.name))
+		qty = min(pending, flt(available.get(row.item_code)))
+		if qty <= 0:
+			continue
+		available[row.item_code] = flt(available.get(row.item_code)) - qty
+		dispatch.append(
+			"items",
+			{"item": row.item_code, "item_name": row.item_name, "qty": qty, "uom": row.uom, "sales_order_item": row.name},
+		)
+	if not dispatch.items:
+		frappe.throw(_("Nothing left to dispatch on Sales Order {0}.").format(sales_order_name))
+	return dispatch
 
 
 @frappe.whitelist()
-def make_sales_invoice(delivery_note_name):
-	from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as dn_to_si
+def make_sales_invoice(scrap_dispatch=None, delivery_note_name=None):
+	"""Sales Invoice for one Scrap Dispatch, billed from its Sales Order with Update
+	Stock off, so billing never touches ERPNext stock. `delivery_note_name` is kept
+	for Delivery Notes created before Scrap Dispatch existed."""
+	if delivery_note_name and not scrap_dispatch:
+		from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as dn_to_si
 
-	scrap_name = frappe.db.get_value("Delivery Note", delivery_note_name, "custom_scrap")
-	si = dn_to_si(delivery_note_name)
-	if scrap_name:
-		si.custom_scrap = scrap_name
+		scrap_name = frappe.db.get_value("Delivery Note", delivery_note_name, "custom_scrap")
+		si = dn_to_si(delivery_note_name)
+		if scrap_name:
+			si.custom_scrap = scrap_name
+		return si
+
+	from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice as so_to_si
+
+	dispatch = frappe.get_doc("Scrap Dispatch", scrap_dispatch)
+	if dispatch.docstatus != 1:
+		frappe.throw(_("Scrap Dispatch {0} must be submitted before billing.").format(dispatch.name))
+	billed = frappe.db.get_value("Sales Invoice", {"custom_scrap_dispatch": dispatch.name, "docstatus": ["!=", 2]}, "name")
+	if billed:
+		frappe.throw(_("Scrap Dispatch {0} is already billed in Sales Invoice {1}.").format(dispatch.name, billed))
+
+	qty_by_so_row = {}
+	for row in dispatch.items:
+		qty_by_so_row[row.sales_order_item] = flt(qty_by_so_row.get(row.sales_order_item)) + flt(row.qty)
+
+	si = so_to_si(dispatch.sales_order)
+	si.items = [row for row in si.items if row.so_detail in qty_by_so_row]
+	if not si.items:
+		frappe.throw(_("No unbilled Sales Order items found for Scrap Dispatch {0}.").format(dispatch.name))
+	for row in si.items:
+		row.qty = qty_by_so_row[row.so_detail]
+	si.update_stock = 0
+	si.custom_scrap = dispatch.scrap
+	si.custom_scrap_dispatch = dispatch.name
+	si.run_method("calculate_taxes_and_totals")
 	return si

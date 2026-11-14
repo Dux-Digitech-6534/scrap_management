@@ -16,7 +16,8 @@ def get_columns():
 		{"label": _("Scrap"), "fieldname": "name", "fieldtype": "Link", "options": "Scrap", "width": 110},
 		{"label": _("Customer"), "fieldname": "selected_customer", "fieldtype": "Link", "options": "Customer", "width": 140},
 		{"label": _("Sales Order"), "fieldname": "sales_order", "fieldtype": "Link", "options": "Sales Order", "width": 110},
-		{"label": _("Delivery Note"), "fieldname": "delivery_note", "fieldtype": "Link", "options": "Delivery Note", "width": 120},
+		{"label": _("Scrap Dispatch"), "fieldname": "scrap_dispatch", "fieldtype": "Link", "options": "Scrap Dispatch", "width": 130},
+		{"label": _("Delivery Note (old)"), "fieldname": "delivery_note", "fieldtype": "Link", "options": "Delivery Note", "width": 120},
 		{"label": _("Gate Pass No"), "fieldname": "gate_pass_no", "fieldtype": "Data", "width": 100},
 		{"label": _("Sales Invoice"), "fieldname": "sales_invoice", "fieldtype": "Link", "options": "Sales Invoice", "width": 120},
 		{"label": _("Payment Entry"), "fieldname": "payment_entry", "fieldtype": "Link", "options": "Payment Entry", "width": 120},
@@ -48,7 +49,7 @@ def get_data(filters):
 
 	rows = frappe.db.sql(
 		f"""
-		select s.name, s.selected_customer, s.sales_order, s.delivery_note, s.gate_pass_no,
+		select s.name, s.selected_customer, s.sales_order, s.scrap_dispatch, s.delivery_note, s.gate_pass_no,
 			s.sales_invoice, s.invoice_amount, s.pending_amount, s.payment_status, s.status,
 			s.closed_on,
 			(select sum(qty) from `tabScrap Item` where parent = s.name) as total_qty,

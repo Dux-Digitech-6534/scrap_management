@@ -196,6 +196,7 @@ const SM_DEFAULT_PRINT_FORMAT = {
 	Scrap: "Scrap Print",
 	Quotation: "Quotation Print",
 	"Sales Order": "Sales Order Print",
+	"Scrap Dispatch": "Scrap Dispatch Gate Pass",
 };
 
 // Real Activity timeline — built from frappe.desk.form.load.get_docinfo, the same
@@ -293,6 +294,23 @@ const SM_ENTITY_CONFIG = {
 		],
 		items: "items",
 		itemFields: [["Item", "item_code"], ["Qty", "qty"], ["Warehouse", "warehouse"]],
+	},
+	"Scrap Dispatch": {
+		fields: [
+			["Scrap", "scrap"],
+			["Customer", "customer"],
+			["Sales Order", "sales_order"],
+			["Dispatch Date", "posting_date"],
+			["Scrap Warehouse", "scrap_warehouse"],
+			["Upload Gate Pass", "gate_pass_attachment", "Attach"],
+			["Vehicle Number", "vehicle_number"],
+			["Driver Name", "driver_name"],
+			["Driver Mobile", "driver_mobile"],
+			["Handover Confirmed", "handover_confirmed", "Check"],
+			["Security Exit Confirmed", "security_exit_confirmed", "Check"],
+		],
+		items: "items",
+		itemFields: [["Item", "item"], ["Item Name", "item_name"], ["Qty", "qty"], ["UOM", "uom"]],
 	},
 	"Sales Invoice": {
 		fields: [
@@ -493,7 +511,7 @@ class ScrapManagementUI {
 			{ key: "stock", label: "Scrap Stock", perm: "read:Scrap", icon: "building" },
 			{ key: "quotation", label: "Quotations", perm: "read:Quotation", icon: "copy" },
 			{ key: "salesorder", label: "Sales Order", perm: "read:Sales Order", icon: "truck" },
-			{ key: "deliverynote", label: "Delivery Note", perm: "read:Delivery Note", icon: "note" },
+			{ key: "deliverynote", label: "Scrap Dispatch", perm: "read:Scrap Dispatch", icon: "note" },
 			{ key: "salesinvoice", label: "Sales Invoice", perm: "read:Sales Invoice", icon: "inbox" },
 			{ key: "paymententry", label: "Payment Entry", perm: "read:Payment Entry", icon: "rupee" },
 			{ key: "closure", label: "Closure", perm: "read:Scrap", icon: "check" },
@@ -610,12 +628,12 @@ class ScrapManagementUI {
 				<div class="sm2-dashboard-grid sm2-section">
 					<div class="sm2-card">
 						<div class="sm2-head"><h3>Recent Activity</h3><span style="font-size:11px;color:var(--p-fg3)">latest Scrap records</span></div>
-						<div class="sm2-tablewrap"><table class="sm2-table"><thead><tr><th>Scrap</th><th>Items</th><th>Status</th><th>Stock</th><th>Quotations</th></tr></thead>
+						<div class="sm2-tablewrap"><table class="sm2-table"><thead><tr><th>Scrap</th><th>Items</th><th>Status</th><th>Available Qty</th><th>Quotations</th></tr></thead>
 						<tbody>${(d.recent || [])
 							.map(
 								(x) => `<tr><td>${sm_scrap_link(x.name)}</td><td>${frappe.utils.escape_html(x.item_summary || "—")}</td>
 							<td>${sm_pill(x.status)}</td>
-							<td>${x.stock_entry ? sm_entity_link("Stock Entry", x.stock_entry) : "—"}</td><td>${x.quotation_count}</td></tr>`
+							<td class="sm2-mono">${flt(x.available_qty)}</td><td>${x.quotation_count}</td></tr>`
 							)
 							.join("") || '<tr><td colspan="5" class="sm2-empty">No Scrap records yet.</td></tr>'}</tbody></table></div>
 					</div>
@@ -634,7 +652,7 @@ class ScrapManagementUI {
 		filters = filters || {};
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Scrap Entry</h1>
-			<p class="sm2-sub">The only custom transaction DocType. Approval auto-creates a real ERPNext Stock Entry.</p></div>
+			<p class="sm2-sub">Scrap stock is kept here in Scrap Management — approval adds it to Scrap stock, Scrap Dispatch takes it out. ERPNext stock is never touched.</p></div>
 			<button class="sm2-btn primary" id="sm2-new-scrap-btn" data-sm-perm="create:Scrap">+ New Scrap</button></div>
 			<div class="sm2-card">
 				<div class="sm2-head"><h3>Scrap List</h3>
@@ -1140,9 +1158,10 @@ class ScrapManagementUI {
 			</div>`;
 
 		const linkedRows = [
-			["Stock Entry", doc.stock_entry, "Stock Entry"],
+			["Stock Entry (old)", doc.stock_entry, "Stock Entry"],
 			["Sales Order", doc.sales_order, "Sales Order"],
-			["Delivery Note", doc.delivery_note, "Delivery Note"],
+			["Scrap Dispatch", doc.scrap_dispatch, "Scrap Dispatch"],
+			["Delivery Note (old)", doc.delivery_note, "Delivery Note"],
 			["Sales Invoice", doc.sales_invoice, "Sales Invoice"],
 		].filter((r) => r[1]);
 
@@ -1176,7 +1195,8 @@ class ScrapManagementUI {
 								html: `<div class="sm2-field-grid">
 									${field("Warehouse", frappe.utils.escape_html(doc.scrap_warehouse))}
 									${field("Dump Location", frappe.utils.escape_html(doc.dump_location || "—"))}
-									${field("Stock Entry", doc.stock_entry ? sm_entity_link("Stock Entry", doc.stock_entry) : "—")}
+									${field("Scrap Stock", doc.approval_state === "Approved" ? "In Scrap Management stock" : "Added on approval")}
+									${doc.stock_entry ? field("Stock Entry (old)", sm_entity_link("Stock Entry", doc.stock_entry)) : ""}
 								</div>
 								<div class="sm2-tablewrap">${itemsTable}</div>`,
 							},
@@ -1189,11 +1209,12 @@ class ScrapManagementUI {
 							// something in them — showing an empty card upfront is noise.
 							{ show: quotes.length > 0, title: "Quotations", html: `<div class="sm2-tablewrap">${quoteTable}</div>` },
 							{
-								show: Boolean(doc.sales_order || doc.delivery_note || doc.sales_invoice || flt(doc.approved_sale_value) > 0),
+								show: Boolean(doc.sales_order || doc.scrap_dispatch || doc.delivery_note || doc.sales_invoice || flt(doc.approved_sale_value) > 0),
 								title: "Sales & Payment",
 								html: `<div class="sm2-field-grid">
 									${field("Sales Order", doc.sales_order ? sm_entity_link("Sales Order", doc.sales_order) : "—")}
-									${field("Delivery Note", doc.delivery_note ? sm_entity_link("Delivery Note", doc.delivery_note) : "—")}
+									${field("Scrap Dispatch", doc.scrap_dispatch ? sm_entity_link("Scrap Dispatch", doc.scrap_dispatch) : "—")}
+									${doc.delivery_note ? field("Delivery Note (old)", sm_entity_link("Delivery Note", doc.delivery_note)) : ""}
 									${field("Sales Invoice", doc.sales_invoice ? sm_entity_link("Sales Invoice", doc.sales_invoice) : "—")}
 									${field("Approved Sale Value", sm_money(doc.approved_sale_value))}
 									${field("Pending Amount", sm_money(doc.pending_amount))}
@@ -1303,7 +1324,8 @@ class ScrapManagementUI {
 		const cfg = SM_ENTITY_CONFIG[doctype] || { fields: [] };
 
 		const fmt = (val, type, fn) => {
-			if (fn === "custom_scrap") return val ? sm_scrap_link(val) : "—";
+			if (fn === "custom_scrap" || fn === "scrap") return val ? sm_scrap_link(val) : "—";
+			if (fn === "sales_order") return val ? sm_entity_link("Sales Order", val) : "—";
 			if (type === "Check") return val ? "Yes" : "No";
 			if (type === "Currency") return sm_money(val);
 			if (type === "Status") return sm_pill(val);
@@ -1336,9 +1358,10 @@ class ScrapManagementUI {
 		const linkedRows =
 			doctype === "Quotation"
 				? (doc.custom_scraps || []).map((r) => ["Scrap", r.scrap, "Scrap"])
-				: doc.custom_scrap
-				? [["Scrap", doc.custom_scrap, "Scrap"]]
+				: doc.custom_scrap || doc.scrap
+				? [["Scrap", doc.custom_scrap || doc.scrap, "Scrap"]]
 				: [];
+		if (doc.custom_scrap_dispatch) linkedRows.push(["Scrap Dispatch", doc.custom_scrap_dispatch, "Scrap Dispatch"]);
 		const status_val = doc.docstatus === 2 ? "Cancelled" : doc.status || doc.custom_approval_status || (doc.docstatus === 1 ? "Submitted" : "Draft");
 
 		$el.html(`
@@ -1418,18 +1441,43 @@ class ScrapManagementUI {
 			}
 		}
 
-		if (doctype === "Sales Order" && flt(doc.per_delivered) < 100) {
+		if (doctype === "Sales Order" && doc.custom_scrap && doc.docstatus === 1 && !["Closed", "Completed"].includes(doc.status)) {
 			$actions.append(
-				$(`<button class="sm2-btn primary" data-sm-perm="create:Delivery Note">Create Delivery Note</button>`).on("click", () =>
-					this.create_delivery_note_flow(doc.name, (name) => this.open_entity_detail("Delivery Note", name))
+				$(`<button class="sm2-btn primary" data-sm-perm="create:Scrap Dispatch">Create Scrap Dispatch</button>`).on("click", () =>
+					this.create_dispatch_flow(doc.name, (name) => this.open_entity_detail("Scrap Dispatch", name))
 				)
 			);
+		}
+
+		if (doctype === "Scrap Dispatch" && doc.docstatus === 1) {
+			frappe.db.get_value("Sales Invoice", { custom_scrap_dispatch: doc.name, docstatus: ["!=", 2] }, "name").then((r) => {
+				if (r.message && r.message.name) return;
+				$actions.prepend(
+					$(`<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice">Create Sales Invoice</button>`).on("click", () =>
+						this.create_sales_invoice_flow(doc.name, (name) => this.open_entity_detail("Sales Invoice", name))
+					)
+				);
+			});
+			const confirmField = (label, check, stamp) =>
+				$(`<button class="sm2-btn" data-sm-perm="write:Scrap Dispatch">${label}</button>`).on("click", () => {
+					frappe.confirm(__("Confirm {0} for {1}?", [label.replace("Confirm ", ""), doc.name]), () => {
+						frappe
+							.call({
+								method: "frappe.client.set_value",
+								args: { doctype, name: doc.name, fieldname: { [check]: 1, [stamp]: frappe.datetime.now_datetime() } },
+								freeze: true,
+							})
+							.then(() => this.open_entity_detail(doctype, doc.name));
+					});
+				});
+			if (!doc.handover_confirmed) $actions.append(confirmField("Confirm Handover", "handover_confirmed", "handover_datetime"));
+			else if (!doc.security_exit_confirmed) $actions.append(confirmField("Confirm Security Exit", "security_exit_confirmed", "security_exit_datetime"));
 		}
 
 		if (doctype === "Delivery Note" && flt(doc.per_billed) < 100) {
 			$actions.append(
 				$(`<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice">Create Sales Invoice</button>`).on("click", () =>
-					this.create_sales_invoice_flow(doc.name, (name) => this.open_entity_detail("Sales Invoice", name))
+					this.create_sales_invoice_flow(null, (name) => this.open_entity_detail("Sales Invoice", name), doc.name)
 				)
 			);
 		}
@@ -1449,6 +1497,12 @@ class ScrapManagementUI {
 			$actions.append(
 				$(`<button class="sm2-btn danger">Delete</button>`).on("click", () => {
 					sm_confirm_delete(doctype, doc.name, () => this.go(this._detail_return_page));
+				})
+			);
+		} else if (doctype === "Scrap Dispatch") {
+			$actions.append(
+				$(`<button class="sm2-btn danger" data-sm-perm="submit:Scrap Dispatch">Cancel</button>`).on("click", () => {
+					sm_confirm_cancel(doctype, doc.name, () => this.open_entity_detail(doctype, doc.name));
 				})
 			);
 		}
@@ -1517,7 +1571,7 @@ class ScrapManagementUI {
 		const $el = this.page.main.find("#sm2-stock");
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Scrap Stock Balance</h1>
-			<p class="sm2-sub">ERPNext's own Stock Ledger balance for scrap items only, across every warehouse scrap has been received into.</p></div></div>
+			<p class="sm2-sub">Scrap stock kept inside Scrap Management (approved scrap minus Scrap Dispatches) — ERPNext stock is not used. Date filter = approval date.</p></div></div>
 			<div class="sm2-card" style="margin-bottom:14px;">
 				<div class="sm2-head"><h3>Filters</h3></div>
 				<div class="sm2-toolbar" style="padding:0 18px 16px;flex-wrap:wrap;align-items:flex-end;">
@@ -1953,16 +2007,16 @@ class ScrapManagementUI {
 		});
 	}
 
-	// ---------------- Delivery Note ----------------
-	// Delivery Notes are only ever created from a Sales Order's "Create Delivery
-	// Note" action (or the Closure screen) — there's no standalone "+ New" entry
-	// point here, this screen exists so an already-created Delivery Note can be
-	// opened directly and printed without going through its Sales Order first.
+	// ---------------- Scrap Dispatch ----------------
+	// Scrap leaves the campus on a Scrap Dispatch (gate pass, vehicle, handover,
+	// security exit). It replaces ERPNext's Delivery Note so scrap stock stays inside
+	// Scrap Management and never touches ERPNext's Stock Ledger. Dispatches are
+	// created from a Sales Order ("Create Scrap Dispatch") or the Closure screen.
 	render_delivery_note_screen() {
 		const $el = this.page.main.find("#sm2-deliverynote");
 		$el.html(`
-			<div class="sm2-hero"><div><h1 class="sm2-title">Delivery Note</h1>
-			<p class="sm2-sub">Standard ERPNext Delivery Notes linked to Scrap via <span class="sm2-mono">custom_scrap</span>.</p></div></div>
+			<div class="sm2-hero"><div><h1 class="sm2-title">Scrap Dispatch</h1>
+			<p class="sm2-sub">Gate pass &amp; dispatch of scrap. Takes quantity out of Scrap stock only — ERPNext stock is never touched.</p></div></div>
 			<div class="sm2-card"><div class="sm2-tablewrap" id="sm2-dn-table"><div class="sm2-empty">Loading…</div></div></div>
 		`);
 		this.load_delivery_notes();
@@ -1972,52 +2026,53 @@ class ScrapManagementUI {
 		frappe.call({
 			method: "frappe.client.get_list",
 			args: {
-				doctype: "Delivery Note",
-				fields: ["name", "customer", "customer_name", "custom_scrap", "posting_date", "total_qty", "per_billed", "status", "docstatus"],
-				filters: { custom_scrap: ["is", "set"] },
+				doctype: "Scrap Dispatch",
+				fields: ["name", "scrap", "customer", "sales_order", "posting_date", "vehicle_number", "handover_confirmed", "security_exit_confirmed", "docstatus"],
 				order_by: "creation desc",
 				limit_page_length: 100,
 			},
 		}).then((r) => {
 			const rows = r.message || [];
+			const status = (row) =>
+				row.docstatus === 2 ? "Cancelled" : row.docstatus === 0 ? "Draft" : row.security_exit_confirmed ? "Exited" : row.handover_confirmed ? "Handed Over" : "Dispatched";
 			this.page.main.find("#sm2-dn-table").html(`
 				<table class="sm2-table"><thead><tr>
-					<th>Delivery Note</th><th>Scrap</th><th>Customer</th><th>Posting Date</th><th>Qty</th><th>Billed %</th><th>Status</th><th>Action</th>
+					<th>Scrap Dispatch</th><th>Scrap</th><th>Customer</th><th>Sales Order</th><th>Dispatch Date</th><th>Vehicle</th><th>Status</th><th>Action</th>
 				</tr></thead>
 				<tbody>${
 					rows.length
 						? rows
 								.map(
 									(row) => `<tr>
-								<td>${sm_entity_link("Delivery Note", row.name)}</td>
-								<td>${sm_scrap_link(row.custom_scrap)}</td>
-								<td>${frappe.utils.escape_html(row.customer_name || row.customer || "")}</td>
+								<td>${sm_entity_link("Scrap Dispatch", row.name)}</td>
+								<td>${sm_scrap_link(row.scrap)}</td>
+								<td>${frappe.utils.escape_html(row.customer || "")}</td>
+								<td>${sm_entity_link("Sales Order", row.sales_order)}</td>
 								<td>${row.posting_date || ""}</td>
-								<td class="sm2-mono">${row.total_qty || 0}</td>
-								<td class="sm2-mono">${flt(row.per_billed).toFixed(0)}%</td>
-								<td>${sm_pill(row.status)}</td>
+								<td>${frappe.utils.escape_html(row.vehicle_number || "—")}</td>
+								<td>${sm_pill(status(row))}</td>
 								<td>
-									<button class="sm2-btn" data-dn-print="${row.name}">Print</button>
 									<button class="sm2-btn" data-dn-gatepass="${row.name}">Gate Pass</button>
 									${
 										row.docstatus === 1
-											? ` <button class="sm2-btn danger" data-dn-cancel="${row.name}">Cancel</button>`
-											: ` <button class="sm2-btn danger" data-dn-delete="${row.name}">Delete</button>`
+											? ` <button class="sm2-btn danger" data-sm-perm="submit:Scrap Dispatch" data-dn-cancel="${row.name}">Cancel</button>`
+											: row.docstatus === 0
+											? ` <button class="sm2-btn danger" data-dn-delete="${row.name}">Delete</button>`
+											: ""
 									}
 								</td>
 							</tr>`
 								)
 								.join("")
-						: `<tr><td colspan="8" class="sm2-empty">No Delivery Notes found.</td></tr>`
+						: `<tr><td colspan="8" class="sm2-empty">No Scrap Dispatch found. Create one from a Sales Order or the Closure screen.</td></tr>`
 				}</tbody></table>
 			`);
-			this.page.main.find("[data-dn-print]").on("click", (e) => sm_print("Delivery Note", $(e.currentTarget).data("dn-print")));
-			this.page.main.find("[data-dn-gatepass]").on("click", (e) => sm_print("Delivery Note", $(e.currentTarget).data("dn-gatepass"), "Scrap Gate Pass"));
+			this.page.main.find("[data-dn-gatepass]").on("click", (e) => sm_print("Scrap Dispatch", $(e.currentTarget).data("dn-gatepass"), "Scrap Dispatch Gate Pass"));
 			this.page.main.find("[data-dn-delete]").on("click", (e) => {
-				sm_confirm_delete("Delivery Note", $(e.currentTarget).data("dn-delete"), () => this.load_delivery_notes());
+				sm_confirm_delete("Scrap Dispatch", $(e.currentTarget).data("dn-delete"), () => this.load_delivery_notes());
 			});
 			this.page.main.find("[data-dn-cancel]").on("click", (e) => {
-				sm_confirm_cancel("Delivery Note", $(e.currentTarget).data("dn-cancel"), () => this.load_delivery_notes());
+				sm_confirm_cancel("Scrap Dispatch", $(e.currentTarget).data("dn-cancel"), () => this.load_delivery_notes());
 			});
 		});
 	}
@@ -2163,19 +2218,11 @@ class ScrapManagementUI {
 	}
 
 	// "+ New Sales Invoice" entry point — full-page form (same pattern as New
-	// Sales Order): mapped from an unbilled Delivery Note, or fully direct/manual
+	// Sales Order): mapped from an unbilled Scrap Dispatch, or fully direct/manual
 	// with no Scrap involved.
 	open_new_sales_invoice() {
-		frappe.call({
-			method: "frappe.client.get_list",
-			args: {
-				doctype: "Delivery Note",
-				filters: { custom_scrap: ["is", "set"], docstatus: 1, per_billed: ["<", 100] },
-				fields: ["name", "customer", "customer_name"],
-				limit_page_length: 50,
-			},
-		}).then((r) => {
-			const dns = r.message || [];
+		frappe.call({ method: "scrap_management.api.get_unbilled_scrap_dispatches" }).then((r) => {
+			const dns = (r.message || []).map((d) => Object.assign({ customer_name: d.customer }, d));
 			const dnByName = {};
 			dns.forEach((d) => (dnByName[d.name] = d));
 			const isMobileItems = sm_is_mobile();
@@ -2208,7 +2255,7 @@ class ScrapManagementUI {
 									<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:1;">Rate</div><div style="flex:1;">Amount</div>
 								</div>
 								<div id="sm2-new-si2-item-rows"></div>
-								<div id="sm2-new-si2-item-empty" class="sm2-empty">Select a Delivery Note above to load its unbilled items.</div>
+								<div id="sm2-new-si2-item-empty" class="sm2-empty">Select a Scrap Dispatch above to load its items.</div>
 							</div>
 						</div>
 						<div id="sm2-new-si2-manual" style="display:none;">
@@ -2237,8 +2284,8 @@ class ScrapManagementUI {
 						fieldtype: "Select",
 						fieldname: "order_mode",
 						label: "Order Type",
-						options: "From Delivery Note\nDirect (No Scrap)",
-						default: dns.length ? "From Delivery Note" : "Direct (No Scrap)",
+						options: "From Scrap Dispatch\nDirect (No Scrap)",
+						default: dns.length ? "From Scrap Dispatch" : "Direct (No Scrap)",
 						reqd: 1,
 						onchange: () => refreshMode(),
 					},
@@ -2246,14 +2293,14 @@ class ScrapManagementUI {
 					{
 						fieldtype: "Select",
 						fieldname: "delivery_note",
-						label: "Delivery Note",
+						label: "Scrap Dispatch",
 						options: ["", ...dns.map((d) => d.name)].join("\n"),
-						depends_on: "eval:doc.order_mode=='From Delivery Note'",
+						depends_on: "eval:doc.order_mode=='From Scrap Dispatch'",
 						onchange: () => loadDnPreview(fg.get_value("delivery_note")),
 					},
 					{ fieldtype: "Link", fieldname: "customer", label: "Customer", options: "Customer", depends_on: "eval:doc.order_mode=='Direct (No Scrap)'" },
 					{ fieldtype: "Section Break" },
-					{ fieldtype: "Data", fieldname: "buyer_display", label: "Buyer", read_only: 1, depends_on: "eval:doc.order_mode=='From Delivery Note'" },
+					{ fieldtype: "Data", fieldname: "buyer_display", label: "Buyer", read_only: 1, depends_on: "eval:doc.order_mode=='From Scrap Dispatch'" },
 					{ fieldtype: "Date", fieldname: "posting_date", label: "Posting Date", default: frappe.datetime.get_today(), reqd: 1 },
 				],
 			});
@@ -2281,7 +2328,7 @@ class ScrapManagementUI {
 					$itemEmpty.show();
 					return;
 				}
-				frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_sales_invoice", args: { delivery_note_name: dnName }, freeze: true }).then((r2) => {
+				frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_sales_invoice", args: { scrap_dispatch: dnName }, freeze: true }).then((r2) => {
 					mappedDoc = r2.message;
 					const items = (mappedDoc && mappedDoc.items) || [];
 					$itemEmpty.toggle(!items.length);
@@ -2422,7 +2469,7 @@ class ScrapManagementUI {
 				}
 
 				if (!mappedDoc) {
-					frappe.msgprint(__("Select a Delivery Note."));
+					frappe.msgprint(__("Select a Scrap Dispatch."));
 					return;
 				}
 				mappedDoc.posting_date = values.posting_date;
@@ -2640,7 +2687,7 @@ class ScrapManagementUI {
 		const $el = this.page.main.find("#sm2-closure");
 		$el.html(`
 			<div class="sm2-hero"><div><h1 class="sm2-title">Closure</h1>
-			<p class="sm2-sub">Delivery Note → Gate Pass → Sales Invoice → Payment Entry → Scrap Closed.</p></div></div>
+			<p class="sm2-sub">Scrap Dispatch (Gate Pass) → Sales Invoice → Payment Entry → Scrap Closed.</p></div></div>
 			<div class="sm2-card"><div class="sm2-tablewrap" id="sm2-closure-table"><div class="sm2-empty">Loading…</div></div></div>
 		`);
 		this.load_closure();
@@ -2651,7 +2698,7 @@ class ScrapManagementUI {
 			const rows = (r.message || {}).data || [];
 			this.page.main.find("#sm2-closure-table").html(`
 				<table class="sm2-table"><thead><tr>
-					<th>Scrap</th><th>Customer</th><th>Sales Order</th><th>Delivery Note</th><th>Sales Invoice</th>
+					<th>Scrap</th><th>Customer</th><th>Sales Order</th><th>Scrap Dispatch</th><th>Sales Invoice</th>
 					<th>Invoice Amount</th><th>Pending Amount</th><th>Status</th><th>Action</th>
 				</tr></thead>
 				<tbody>${
@@ -2662,7 +2709,7 @@ class ScrapManagementUI {
 								<td>${sm_scrap_link(row.name)}</td>
 								<td>${frappe.utils.escape_html(row.selected_customer || "")}</td>
 								<td>${sm_entity_link("Sales Order", row.sales_order)}</td>
-								<td>${sm_entity_link("Delivery Note", row.delivery_note)}</td>
+								<td>${row.scrap_dispatch ? sm_entity_link("Scrap Dispatch", row.scrap_dispatch) : sm_entity_link("Delivery Note", row.delivery_note)}</td>
 								<td>${sm_entity_link("Sales Invoice", row.sales_invoice)}</td>
 								<td class="sm2-mono">${sm_money(row.invoice_amount)}</td>
 								<td class="sm2-mono">${sm_money(row.pending_amount)}</td>
@@ -2683,10 +2730,11 @@ class ScrapManagementUI {
 				const action = $btn.data("closure-action");
 				const scrap = $btn.data("scrap");
 				const so = $btn.data("so");
-				const dn = $btn.data("dn");
+				const dispatch = $btn.data("dispatch");
+				const legacyDn = $btn.data("legacy-dn");
 				const si = $btn.data("si");
-				if (action === "delivery-note") this.create_delivery_note_flow(so);
-				if (action === "sales-invoice") this.create_sales_invoice_flow(dn);
+				if (action === "dispatch") this.create_dispatch_flow(so);
+				if (action === "sales-invoice") this.create_sales_invoice_flow(dispatch, null, legacyDn);
 				if (action === "payment") this.open_payment_dialog(si, scrap);
 			});
 		});
@@ -2694,42 +2742,45 @@ class ScrapManagementUI {
 
 	closure_action_button(row) {
 		if (row.status === "Closed") return `<span class="sm2-pill ok">Closed</span>`;
-		if (!row.delivery_note)
-			return `<button class="sm2-btn primary" data-sm-perm="create:Delivery Note" data-closure-action="delivery-note" data-so="${row.sales_order}">Create Delivery Note</button>`;
+		if (!row.scrap_dispatch && !row.delivery_note)
+			return `<button class="sm2-btn primary" data-sm-perm="create:Scrap Dispatch" data-closure-action="dispatch" data-so="${row.sales_order}">Create Scrap Dispatch</button>`;
 		if (!row.sales_invoice)
-			return `<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice" data-closure-action="sales-invoice" data-dn="${row.delivery_note}">Create Sales Invoice</button>`;
+			return row.scrap_dispatch
+				? `<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice" data-closure-action="sales-invoice" data-dispatch="${row.scrap_dispatch}">Create Sales Invoice</button>`
+				: `<button class="sm2-btn primary" data-sm-perm="create:Sales Invoice" data-closure-action="sales-invoice" data-legacy-dn="${row.delivery_note}">Create Sales Invoice</button>`;
 		if (flt(row.pending_amount) > 0)
 			return `<button class="sm2-btn primary" data-sm-perm="create:Payment Entry" data-closure-action="payment" data-si="${row.sales_invoice}" data-scrap="${row.name}">Record Payment</button>`;
 		return "";
 	}
 
-	create_delivery_note_flow(soName, on_done) {
-		on_done = on_done || (() => this.load_closure());
-		frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_delivery_note", args: { sales_order_name: soName }, freeze: true }).then((r) => {
+	create_dispatch_flow(soName, on_done) {
+		on_done = on_done || ((name) => this.open_entity_detail("Scrap Dispatch", name));
+		frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_scrap_dispatch", args: { sales_order_name: soName }, freeze: true }).then((r) => {
 			const mapped = r.message;
 			if (!mapped) return;
-			this._render_delivery_note_form(mapped, on_done);
+			this._render_dispatch_form(mapped, on_done);
 		});
 	}
 
 	// Full-page creation form (not a dialog) — same pattern as New Scrap / New
 	// Quotation / New Sales Order / New Sales Invoice / New Payment Entry.
-	_render_delivery_note_form(mapped, on_done) {
+	_render_dispatch_form(mapped, on_done) {
 		this._detail_return_page = this._last_nav_page || "salesorder";
 		this.page.main.find(".sm2-nav-btn").removeClass("active");
 		this.page.main.find(".sm2-page").removeClass("active");
 		const $el = this.page.main.find("#sm2-detail").addClass("active");
+		const items = mapped.items || [];
 
 		$el.html(`
-			<div class="sm2-crumb"><a data-back-to-list="1">Scrap Management</a> &rsaquo; New Delivery Note</div>
+			<div class="sm2-crumb"><a data-back-to-list="1">Scrap Management</a> &rsaquo; New Scrap Dispatch</div>
 			<div class="sm2-detail-head">
-				<h1 class="sm2-detail-title">New Delivery Note — Gate Pass &amp; Handover</h1>
+				<h1 class="sm2-detail-title">New Scrap Dispatch — Gate Pass &amp; Handover</h1>
 				<div style="display:flex;gap:8px;">
 					<button class="sm2-btn" id="sm2-new-dn-back">&larr; Back</button>
 					<button class="sm2-btn primary" id="sm2-new-dn-save">Create &amp; Dispatch</button>
 				</div>
 			</div>
-			<div class="sm2-notice">This form stays inside Scrap Management. Real ERPNext permissions, validations and workflow rules run when you save.</div>
+			<div class="sm2-notice">Dispatch takes the quantity out of Scrap stock only. ERPNext stock is never touched.</div>
 			<div class="sm2-card numbered" style="margin-bottom:14px;">
 				<div class="sm2-head"><h3><span class="sm2-num">01</span>&nbsp; Gate Pass &amp; Handover Details</h3></div>
 				<div id="sm2-new-dn-fields" style="padding:6px 18px 18px;"></div>
@@ -2742,12 +2793,12 @@ class ScrapManagementUI {
 							<div style="flex:2;">Item</div><div style="flex:0.8;">Qty</div><div style="flex:0.8;">UOM</div>
 						</div>
 						${
-							(mapped.items || [])
+							items
 								.map(
-									(it) => `<div class="sm2-item-grid-row">
-							<div style="flex:2;min-width:0;">${frappe.utils.escape_html(it.item_name || it.item_code)}</div>
-							<div style="flex:0.8;min-width:0;" class="sm2-mono">${it.qty}</div>
-							<div style="flex:0.8;min-width:0;">${it.uom || ""}</div>
+									(it, i) => `<div class="sm2-item-grid-row">
+							<div style="flex:2;min-width:0;">${frappe.utils.escape_html(it.item_name || it.item)}</div>
+							<div style="flex:0.8;min-width:0;"><input type="number" step="any" min="0" max="${it.qty}" class="sm2-input" data-dispatch-qty="${i}" value="${it.qty}" style="width:100%;box-sizing:border-box;"></div>
+							<div style="flex:0.8;min-width:0;">${frappe.utils.escape_html(it.uom || "")}</div>
 						</div>`
 								)
 								.join("") || `<div class="sm2-empty">No items.</div>`
@@ -2761,15 +2812,17 @@ class ScrapManagementUI {
 		const fg = new frappe.ui.FieldGroup({
 			parent: $el.find("#sm2-new-dn-fields"),
 			fields: [
-				{ fieldtype: "Attach", fieldname: "custom_gate_pass_no", label: "Upload Gate Pass" },
-				{ fieldtype: "Data", fieldname: "custom_vehicle_number", label: "Vehicle Number" },
+				{ fieldtype: "Date", fieldname: "posting_date", label: "Dispatch Date", default: frappe.datetime.get_today(), reqd: 1 },
+				{ fieldtype: "Attach", fieldname: "gate_pass_attachment", label: "Upload Gate Pass" },
+				{ fieldtype: "Data", fieldname: "vehicle_number", label: "Vehicle Number" },
 				{ fieldtype: "Column Break" },
-				{ fieldtype: "Data", fieldname: "custom_driver_name", label: "Driver Name" },
-				{ fieldtype: "Data", fieldname: "custom_driver_mobile", label: "Driver Mobile" },
+				{ fieldtype: "Data", fieldname: "driver_name", label: "Driver Name" },
+				{ fieldtype: "Data", fieldname: "driver_mobile", label: "Driver Mobile" },
+				{ fieldtype: "Data", fieldname: "driver_id", label: "Driver ID / Reference" },
 				{ fieldtype: "Section Break" },
-				{ fieldtype: "Check", fieldname: "custom_handover_confirmed", label: "Handover Confirmed", default: 1 },
+				{ fieldtype: "Check", fieldname: "handover_confirmed", label: "Handover Confirmed", default: 1 },
 				{ fieldtype: "Column Break" },
-				{ fieldtype: "Check", fieldname: "custom_security_exit_confirmed", label: "Security Exit Confirmed" },
+				{ fieldtype: "Check", fieldname: "security_exit_confirmed", label: "Security Exit Confirmed" },
 			],
 		});
 		fg.make();
@@ -2778,11 +2831,16 @@ class ScrapManagementUI {
 			const values = fg.get_values();
 			if (!values) return;
 			const doc = Object.assign({}, mapped, values);
-			if (values.custom_handover_confirmed) doc.custom_handover_datetime = frappe.datetime.now_datetime();
-			if (values.custom_security_exit_confirmed) doc.custom_security_exit_datetime = frappe.datetime.now_datetime();
+			doc.items = items
+				.map((it, i) => Object.assign({}, it, { qty: parseFloat($el.find(`[data-dispatch-qty="${i}"]`).val()) || 0 }))
+				.filter((it) => it.qty > 0);
+			if (!doc.items.length) {
+				frappe.msgprint(__("Enter a quantity for at least one item."));
+				return;
+			}
 			frappe.call({ method: "frappe.client.insert", args: { doc }, freeze: true }).then((r2) => {
 				frappe.call({ method: "frappe.client.submit", args: { doc: r2.message }, freeze: true }).then(() => {
-					frappe.show_alert({ message: __("Delivery Note {0} created and dispatched.", [r2.message.name]), indicator: "green" });
+					frappe.show_alert({ message: __("Scrap Dispatch {0} created.", [r2.message.name]), indicator: "green" });
 					on_done(r2.message.name);
 				});
 			});
@@ -2790,10 +2848,12 @@ class ScrapManagementUI {
 	}
 
 	// Full-page creation form (not a dialog/confirm) — same pattern as New Scrap /
-	// New Quotation / New Sales Order.
-	create_sales_invoice_flow(dnName, on_done) {
+	// New Quotation / New Sales Order. `legacyDn` bills a Delivery Note created before
+	// Scrap Dispatch existed.
+	create_sales_invoice_flow(dispatchName, on_done, legacyDn) {
 		on_done = on_done || ((name) => this.open_entity_detail("Sales Invoice", name));
-		frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_sales_invoice", args: { delivery_note_name: dnName }, freeze: true }).then((r) => {
+		const args = dispatchName ? { scrap_dispatch: dispatchName } : { delivery_note_name: legacyDn };
+		frappe.call({ method: "scrap_management.scrap_management.doctype.scrap.scrap.make_sales_invoice", args, freeze: true }).then((r) => {
 			const mapped = r.message;
 			if (!mapped) return;
 			this._render_sales_invoice_form(mapped, on_done);

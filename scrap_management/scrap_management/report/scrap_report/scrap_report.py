@@ -26,7 +26,6 @@ def get_columns():
 		{"label": _("Reason"), "fieldname": "reason_for_scrap", "fieldtype": "Data", "width": 130},
 		{"label": _("Remarks"), "fieldname": "remarks", "fieldtype": "Data", "width": 110},
 		{"label": _("Approval Status"), "fieldname": "approval_status", "fieldtype": "Data", "width": 110},
-		{"label": _("Stock Entry"), "fieldname": "stock_entry", "fieldtype": "Link", "options": "Stock Entry", "width": 110},
 		{"label": _("Scrap Warehouse"), "fieldname": "scrap_warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 130},
 		{"label": _("Dump Location"), "fieldname": "dump_location", "fieldtype": "Data", "width": 130},
 		{"label": _("Received Qty"), "fieldname": "received_qty", "fieldtype": "Float", "width": 100},
@@ -36,7 +35,7 @@ def get_columns():
 		{"label": _("Approved Quotation"), "fieldname": "selected_quotation", "fieldtype": "Link", "options": "Quotation", "width": 130},
 		{"label": _("Final Sale Value"), "fieldname": "approved_sale_value", "fieldtype": "Currency", "width": 110},
 		{"label": _("Sales Order"), "fieldname": "sales_order", "fieldtype": "Link", "options": "Sales Order", "width": 110},
-		{"label": _("Delivery Note"), "fieldname": "delivery_note", "fieldtype": "Link", "options": "Delivery Note", "width": 120},
+		{"label": _("Scrap Dispatch"), "fieldname": "scrap_dispatch", "fieldtype": "Link", "options": "Scrap Dispatch", "width": 130},
 		{"label": _("Gate Pass No"), "fieldname": "gate_pass_no", "fieldtype": "Data", "width": 100},
 		{"label": _("Sales Invoice"), "fieldname": "sales_invoice", "fieldtype": "Link", "options": "Sales Invoice", "width": 120},
 		{"label": _("Payment Entry"), "fieldname": "payment_entry", "fieldtype": "Link", "options": "Payment Entry", "width": 120},
@@ -80,7 +79,7 @@ def get_data(filters):
 		select s.name, s.scrap_date, s.campus, s.department, si.scrap_category, si.item, si.item_name,
 			si.qty, si.uom, s.reason_for_scrap, s.remarks, s.status, s.stock_entry, s.scrap_warehouse, s.dump_location,
 			si.dispatched_qty, si.available_qty, s.selected_customer, s.selected_quotation,
-			s.approved_sale_value, s.sales_order, s.delivery_note, s.gate_pass_no,
+			s.approved_sale_value, s.sales_order, s.scrap_dispatch, s.delivery_note, s.gate_pass_no,
 			s.sales_invoice, s.invoice_amount, s.pending_amount, s.payment_status, s.closed_on
 		from `tabScrap` s
 		inner join `tabScrap Item` si on si.parent = s.name
